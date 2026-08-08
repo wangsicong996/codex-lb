@@ -22,9 +22,7 @@ body:
       options:
         - uvx
         - pip
-        - Docker
-        - Docker Compose
-        - Helm chart
+        - Bin bundle / Flatpak
         - From source
         - Not yet deployed — pre-install question
 

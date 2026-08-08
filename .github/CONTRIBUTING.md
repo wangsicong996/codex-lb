@@ -80,7 +80,6 @@ package manager (see `frontend/package.json`).
 .
 ├── app/                  # Python application (proxy, accounts, dashboard backend)
 ├── frontend/             # Dashboard SPA
-├── deploy/helm/codex-lb/ # Helm chart
 ├── tests/
 │   ├── unit/             # Fast, isolated tests
 │   └── integration/      # End-to-end / network-touching tests
@@ -210,7 +209,7 @@ quality so far.
 Before a PR is squash-merged into `main`:
 
 1. **CI must be all-green** on the merge-target head. "UNSTABLE, looks
-   fine" is not a green CI; rerun, fix, or wait. The Helm / migration /
+   fine" is not a green CI; rerun, fix, or wait. The migration /
    PostgreSQL test jobs are part of the gate, not optional. The
    `CI Required` check is the branch-protection check to require: it
    depends on every CI job and also runs for merge queue synthetic merge
@@ -340,7 +339,7 @@ Releases are automated via [release-please](https://github.com/googleapis/releas
 2. release-please opens / updates a "chore(main): release X.Y.Z" PR
    containing the proposed version bump and generated changelog.
 3. When a maintainer merges that PR, a GitHub Release is published and the
-   PyPI / Docker / Helm artifacts are built and uploaded.
+   PyPI / bin-bundle artifacts are built and uploaded.
 
 Contributors **never** need to edit `CHANGELOG.md`, version strings, or tag
 manually.

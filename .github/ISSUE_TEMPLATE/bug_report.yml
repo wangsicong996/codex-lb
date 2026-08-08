@@ -43,9 +43,7 @@ body:
       options:
         - uvx (codex-lb)
         - pip install codex-lb
-        - Docker (ghcr.io/Soju06/codex-lb)
-        - Docker Compose
-        - Helm chart (oci://ghcr.io/soju06/charts/codex-lb)
+        - Bin bundle / Flatpak
         - From source
         - Other (describe below)
     validations:
@@ -117,7 +115,7 @@ body:
       label: Steps to reproduce
       description: Minimal reproduction — config, request payload, command sequence.
       placeholder: |
-        1. Start codex-lb with `docker compose up -d` (compose snippet below).
+        1. Start codex-lb with `uvx codex-lb`.
         2. Configure Codex CLI to point at http://localhost:<port>.
         3. Run `codex … <prompt>`.
         4. Observe …
@@ -139,7 +137,7 @@ body:
     attributes:
       label: Configuration / environment
       description: |
-        Anonymized excerpt of your deployment config — env vars, compose file, helm
+        Anonymized excerpt of your deployment config — env vars or Flatpak overrides
         values, or `config.yaml`. Strip secrets.
       render: yaml
 

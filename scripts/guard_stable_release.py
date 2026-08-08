@@ -65,14 +65,11 @@ def _read_project_versions_at_ref(root: Path, ref: str) -> dict[str, str]:
         raise GuardError(f"could not find pyproject version in {ref}")
 
     package_data = json.loads(git_show("frontend/package.json"))
-    chart_text = git_show("deploy/helm/codex-lb/Chart.yaml")
     uv_text = git_show("uv.lock")
     return {
         "pyproject.toml": pyproject_version,
         "app/__init__.py": find(r'^__version__ = "([^"]+)"', git_show("app/__init__.py"), "app version"),
         "frontend/package.json": package_data["version"],
-        "deploy/helm/codex-lb/Chart.yaml version": find(r"^version: (.+)$", chart_text, "chart version"),
-        "deploy/helm/codex-lb/Chart.yaml appVersion": find(r"^appVersion: (.+)$", chart_text, "chart appVersion"),
         "uv.lock": find(
             r'\[\[package\]\]\nname = "codex-lb"\nversion = "([^"]+)"\nsource = \{ editable = "\." \}',
             uv_text,

@@ -35,24 +35,6 @@ FILTERS = {
         "docs/reference/settings.md",
         ".env.example",
     ],
-    "helm": [
-        "deploy/helm/**",
-        "Makefile",
-        ".github/workflows/ci.yml",
-    ],
-    "docker": [
-        "Dockerfile",
-        "Dockerfile.*",
-        ".dockerignore",
-        "docker-compose*.yml",
-        "app/**",
-        "config/**",
-        "frontend/**",
-        "scripts/**",
-        "pyproject.toml",
-        "uv.lock",
-        ".github/workflows/ci.yml",
-    ],
     "migrations": [
         "app/db/alembic/**",
         "pyproject.toml",
@@ -89,8 +71,7 @@ def _pull_request_files(event: dict[str, Any]) -> list[str]:
             return [
                 "frontend/__github_api_unavailable__",
                 "app/__github_api_unavailable__",
-                "deploy/helm/__github_api_unavailable__",
-                "Dockerfile",
+                "scripts/package_bin_bundle.py",
                 "app/db/alembic/__github_api_unavailable__",
             ]
         if not isinstance(payload, list):

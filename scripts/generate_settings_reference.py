@@ -219,9 +219,8 @@ def render_settings_reference() -> str:
         "",
         "The listen port (default `2455`) is read from the bare `PORT` process",
         f"environment variable, not a `{ENV_PREFIX}*` setting, and applies to host",
-        "(uvx/local) runs only — env files map only prefixed variables. In Docker the",
-        "container always listens on 2455 (the entrypoint pins `--port 2455`); change",
-        "the host side of the compose `ports` mapping instead.",
+        "(uvx/local/bin-bundle) runs — env files map only prefixed variables. Use",
+        "`--port` or `PORT` to change the listen port.",
     ]
 
     for section in _SECTION_ORDER:

@@ -2,15 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "labels": ["dependencies"],
-  "postUpdateOptions": ["helmUpdateSubChartArchives"],
   "packageRules": [
-    {
-      "description": "Helm sub-chart updates (Bitnami PostgreSQL)",
-      "matchManagers": ["helmv3"],
-      "matchPackageNames": ["postgresql"],
-      "schedule": ["before 7am on monday"],
-      "automerge": false
-    },
     {
       "description": "GitHub Actions updates",
       "matchManagers": ["github-actions"],
@@ -19,12 +11,6 @@
       "automerge": true,
       "automergeType": "pr",
       "matchUpdateTypes": ["minor", "patch"]
-    },
-    {
-      "description": "Docker base image updates",
-      "matchManagers": ["dockerfile"],
-      "schedule": ["before 7am on monday"],
-      "automerge": false
     }
   ]
 }

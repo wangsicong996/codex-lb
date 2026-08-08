@@ -25,17 +25,12 @@ from scripts.release_versions import (
 def write_minimal_release_files(root: Path, version: str = "1.18.2") -> None:
     (root / "app").mkdir(parents=True)
     (root / "frontend").mkdir(parents=True)
-    (root / "deploy" / "helm" / "codex-lb").mkdir(parents=True)
     (root / "pyproject.toml").write_text(f'[project]\nname = "codex-lb"\nversion = "{version}"\n', encoding="utf-8")
     (root / "app" / "__init__.py").write_text(
         f'__version__ = "{version}"  # x-release-please-version\n', encoding="utf-8"
     )
     (root / "frontend" / "package.json").write_text(
         json.dumps({"name": "frontend", "version": version}) + "\n", encoding="utf-8"
-    )
-    (root / "deploy" / "helm" / "codex-lb" / "Chart.yaml").write_text(
-        f"apiVersion: v2\nname: codex-lb\nversion: {version}\nappVersion: {version}\n",
-        encoding="utf-8",
     )
     (root / "uv.lock").write_text(
         f'[[package]]\nname = "codex-lb"\nversion = "{version}"\nsource = {{ editable = "." }}\n',
@@ -145,13 +140,6 @@ def test_assert_project_versions_accepts_pep440_uv_lock_prerelease(tmp_path: Pat
             "frontend/package.json",
             lambda root: (root / "frontend" / "package.json").write_text(
                 json.dumps({"name": "frontend", "version": "1.20.0b3"}) + "\n", encoding="utf-8"
-            ),
-        ),
-        (
-            "deploy/helm/codex-lb/Chart.yaml",
-            lambda root: (root / "deploy" / "helm" / "codex-lb" / "Chart.yaml").write_text(
-                "apiVersion: v2\nname: codex-lb\nversion: 1.20.0b3\nappVersion: 1.20.0b3\n",
-                encoding="utf-8",
             ),
         ),
     ],

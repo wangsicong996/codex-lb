@@ -63,9 +63,7 @@ CODEX_LB_REQUIRED_CHECKS = frozenset(
         "Migration check (alembic)",
         "Migration check (alembic, PostgreSQL)",
         "Package (build)",
-        "Docker build",
-        "Helm lint + template + kubeconform",
-        "Helm smoke install (kind)",
+        "Package (bin bundle)",
         "CI Required",
     }
 )

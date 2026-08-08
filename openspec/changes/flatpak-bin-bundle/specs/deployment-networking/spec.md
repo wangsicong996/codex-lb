@@ -1,10 +1,19 @@
-# deployment-networking Specification
+## REMOVED Requirements
 
-## Purpose
+### Requirement: NetworkPolicy ingress defaults fail closed
 
-Define that host, uvx, bin-bundle, and external Flatpak networking are
-operator-owned after first-party Docker/Helm deployment paths were removed.
-## Requirements
+### Requirement: Stock Docker networking explains network switching
+
+### Requirement: Shipped overlays that enable NetworkPolicy with Ingress allow ingress-controller traffic
+
+### Requirement: Missing NetworkPolicy ingress allowlist warns at install time
+
+### Requirement: nginx ingress annotations render as a coherent set
+
+### Requirement: Responses sticky routing defaults are admission-safe on stock ingress-nginx
+
+## ADDED Requirements
+
 ### Requirement: Host and Flatpak networking are operator-owned
 
 The project MUST NOT ship Docker Compose, Dockerfile, or Helm chart networking

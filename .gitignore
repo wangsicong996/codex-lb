@@ -20,9 +20,9 @@ __pycache__/
 # Build artifacts
 build/
 dist/
+bin/
 site/
 app/static/
-deploy/helm/*/charts/
 
 # Node
 node_modules/

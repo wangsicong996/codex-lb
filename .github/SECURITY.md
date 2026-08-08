@@ -23,8 +23,8 @@ contact the maintainer via the email address listed in
 
 A good report makes triage much faster:
 
-- **Affected version(s)**: e.g. `codex-lb 1.16.0`, ghcr image digest, or commit SHA.
-- **Deployment**: uvx / pip / Docker / Helm / from source.
+- **Affected version(s)**: e.g. `codex-lb 1.16.0`, bin-bundle tarball name, or commit SHA.
+- **Deployment**: uvx / pip / bin bundle / Flatpak / from source.
 - **Impact**: what can an attacker do? (data disclosure, account takeover,
   RCE, DoS, auth bypass, log injection, etc.)
 - **Reproduction**: minimal steps — config snippet, request payload, log
@@ -38,9 +38,8 @@ In scope:
 - The codex-lb proxy (`app/`) — auth, routing, account management, the
   dashboard backend, the `/v1/*` and `/backend-api/*` surfaces.
 - The dashboard frontend (`frontend/`).
-- The published Docker image (`ghcr.io/Soju06/codex-lb`) and Helm chart
-  (`oci://ghcr.io/soju06/charts/codex-lb`).
-- Released PyPI artifacts (`codex-lb` on PyPI).
+- Released PyPI artifacts (`codex-lb` on PyPI) and the vendored
+  `codex-lb-*-bin.tar.gz` release assets.
 
 Out of scope (please don't file these as security advisories):
 

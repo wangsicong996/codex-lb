@@ -67,7 +67,7 @@ body:
         - Chat Completions API surface
         - Responses API surface
         - Images / files API
-        - Helm / Docker / packaging
+        - Bin bundle / Flatpak / packaging
         - OpenSpec / docs
         - Other
 

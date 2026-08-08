@@ -143,12 +143,6 @@ def update_project_versions(root: Path, version: str) -> None:
     package_data["version"] = version
     _write_text(package_json, json.dumps(package_data, indent=2, ensure_ascii=False) + "\n")
 
-    chart = root / "deploy" / "helm" / "codex-lb" / "Chart.yaml"
-    chart_text = chart.read_text(encoding="utf-8")
-    chart_text = _replace_once(chart_text, r"^version: .*$", f"version: {version}", path=str(chart))
-    chart_text = _replace_once(chart_text, r"^appVersion: .*$", f"appVersion: {version}", path=str(chart))
-    _write_text(chart, chart_text)
-
     uv_lock = root / "uv.lock"
     uv_text = uv_lock.read_text(encoding="utf-8")
     uv_text, count = re.subn(
@@ -164,7 +158,6 @@ def update_project_versions(root: Path, version: str) -> None:
 
 def read_project_versions(root: Path) -> dict[str, str]:
     package_data = json.loads((root / "frontend" / "package.json").read_text(encoding="utf-8"))
-    chart_text = (root / "deploy" / "helm" / "codex-lb" / "Chart.yaml").read_text(encoding="utf-8")
     uv_text = (root / "uv.lock").read_text(encoding="utf-8")
 
     def find(pattern: str, text: str, name: str) -> str:
@@ -181,8 +174,6 @@ def read_project_versions(root: Path) -> dict[str, str]:
             "app version",
         ),
         "frontend/package.json": package_data["version"],
-        "deploy/helm/codex-lb/Chart.yaml version": find(r"^version: (.+)$", chart_text, "chart version"),
-        "deploy/helm/codex-lb/Chart.yaml appVersion": find(r"^appVersion: (.+)$", chart_text, "chart appVersion"),
         "uv.lock": find(
             r'\[\[package\]\]\nname = "codex-lb"\nversion = "([^"]+)"\nsource = \{ editable = "\." \}',
             uv_text,

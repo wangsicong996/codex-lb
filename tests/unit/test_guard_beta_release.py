@@ -14,15 +14,10 @@ from scripts.release_versions import update_project_versions
 def write_minimal_release_files(root: Path, version: str = "1.20.0") -> None:
     (root / "app").mkdir(parents=True)
     (root / "frontend").mkdir(parents=True)
-    (root / "deploy" / "helm" / "codex-lb").mkdir(parents=True)
     (root / "pyproject.toml").write_text(f'[project]\nname = "codex-lb"\nversion = "{version}"\n', encoding="utf-8")
     (root / "app" / "__init__.py").write_text(f'__version__ = "{version}"\n', encoding="utf-8")
     (root / "frontend" / "package.json").write_text(
         json.dumps({"name": "frontend", "version": version}) + "\n",
-        encoding="utf-8",
-    )
-    (root / "deploy" / "helm" / "codex-lb" / "Chart.yaml").write_text(
-        f"apiVersion: v2\nname: codex-lb\nversion: {version}\nappVersion: {version}\n",
         encoding="utf-8",
     )
     (root / "uv.lock").write_text(
@@ -88,7 +83,7 @@ Validated candidate: {sha}
 - [x] Backend/unit/integration gates
 - [x] Frontend tests/build
 - [x] Wheel/package validation
-- [x] Docker/container smoke
+- [x] Bin-bundle smoke
 - [x] Live upstream/account smoke not required
 """
 

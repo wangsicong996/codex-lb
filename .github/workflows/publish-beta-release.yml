@@ -91,8 +91,8 @@ jobs:
           ## Install / Run
           \`\`\`bash
           uvx --from "codex-lb==${PYPI_VERSION}" codex-lb
-          docker pull ghcr.io/${GITHUB_REPOSITORY}:${VERSION}
-          helm install codex-lb oci://ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/charts/codex-lb --version ${VERSION} --devel
+          # unpack the GitHub Release asset:
+          tar -xzf codex-lb-${VERSION}-bin.tar.gz && ./bin/codex-lb
           \`\`\`
 
           Promote this train by merging the normal release-please PR for ${VERSION%-beta.*}.

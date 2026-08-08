@@ -20,7 +20,7 @@ CODEX_LB_DASHBOARD_AUTH_PROXY_HEADER=Remote-User
 
 If the trusted header is missing and no fallback password is configured, the dashboard fails closed and shows a reverse-proxy-required message instead of loading the UI.
 
-Ready-to-run Docker commands for both non-default modes are in [Docker deployment — auth mode examples](deployment/docker.md#auth-mode-examples). For Helm, pass the same values through `extraEnv`.
+Set the same environment variables for host, uvx, bin-bundle, or Flatpak installs; see [Configuration](configuration.md).
 
 ## First-time remote access
 

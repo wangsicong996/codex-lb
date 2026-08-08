@@ -37,17 +37,12 @@ Load balancer for ChatGPT accounts. Pool multiple accounts, track usage, manage 
 ## Quick Start
 
 ```bash
-# Docker (recommended)
-docker volume create codex-lb-data
-docker network inspect codex-lb-net >/dev/null 2>&1 || docker network create codex-lb-net
-docker run -d --name codex-lb \
-  --network codex-lb-net \
-  -p 2455:2455 -p 1455:1455 \
-  -v codex-lb-data:/var/lib/codex-lb \
-  ghcr.io/soju06/codex-lb:latest
-
-# or uvx
+# uvx (recommended on host)
 uvx codex-lb
+
+# or unpack a release bin bundle (Flatpak / relocatable)
+tar -xzf codex-lb-<version>-bin.tar.gz
+./bin/codex-lb
 ```
 
 Open [localhost:2455](http://localhost:2455) → Add account → Done.
@@ -92,8 +87,7 @@ PostgreSQL is optional via `CODEX_LB_DATABASE_URL`.
 
 | Environment | Path |
 |-------------|------|
-| Local / uvx | `~/.codex-lb/` |
-| Docker | `/var/lib/codex-lb/` |
+| Local / uvx / bin bundle | `~/.codex-lb/` (or `CODEX_LB_DATA_DIR`) |
 
 Backup this directory to preserve your data.
 
@@ -107,17 +101,13 @@ Full docs live at **<https://soju06.github.io/codex-lb/>**:
 - [Authentication](https://soju06.github.io/codex-lb/authentication/) — dashboard auth modes
 - [API keys](https://soju06.github.io/codex-lb/api-keys/) — protecting proxy routes
 - [Routing](https://soju06.github.io/codex-lb/routing/) — strategy guide
-- [Database](https://soju06.github.io/codex-lb/database/) — SQLite / PostgreSQL, Postgres 16 → 18 upgrade
-- [Deployment](https://soju06.github.io/codex-lb/deployment/docker/) — [Docker](https://soju06.github.io/codex-lb/deployment/docker/), [Kubernetes](https://soju06.github.io/codex-lb/deployment/kubernetes/), [remote access](https://soju06.github.io/codex-lb/deployment/remote/)
+- [Database](https://soju06.github.io/codex-lb/database/) — SQLite / PostgreSQL
+- [Deployment](https://soju06.github.io/codex-lb/deployment/bin-bundle/) — bin bundle / Flatpak, [remote access](https://soju06.github.io/codex-lb/deployment/remote/)
 - [Troubleshooting](https://soju06.github.io/codex-lb/troubleshooting/)
 
 ## Development
 
 ```bash
-# Docker
-docker compose watch
-
-# Local
 uv sync && cd frontend && bun install && cd ..
 uv run codex-lb                              # backend :2455
 cd frontend && bun run dev                     # frontend :5173

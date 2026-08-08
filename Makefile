@@ -47,6 +47,7 @@ help:
 	  '  make test-unit               unit pytest slice, same as CI' \
 	  '  make test-integration-core   integration-core pytest slice' \
 	  '  make package                 build and verify sdist/wheel' \
+	  '  make package-bin             vendor deps into bin/ + tarball' \
 	  '  make ci-fast                 lint/type/frontend/unit/package' \
 	  '  make ci                      full local CI gate'
 
@@ -150,7 +151,7 @@ migration-check-postgres:
 	uv run codex-lb-db --db-url "$(POSTGRES_TEST_DATABASE_URL)" upgrade head
 	uv run codex-lb-db --db-url "$(POSTGRES_TEST_DATABASE_URL)" check
 
-.PHONY: package
+.PHONY: package package-bin
 package: frontend-build
 	uv sync --frozen --no-dev
 	uv run python -c "import app; import app.main; print('import ok')"
@@ -158,64 +159,12 @@ package: frontend-build
 	uvx --from build==1.3.0 python -m build
 	python scripts/verify-wheel-assets.py
 
-.PHONY: docker
-docker:
-	docker build -t codex-lb:ci .
-	trivy image --format table --exit-code 1 --severity CRITICAL --ignore-unfixed codex-lb:ci
-
-.PHONY: helm-deps helm-lint helm-template helm-kubeconform
-helm-deps:
-	helm dependency build deploy/helm/codex-lb/
-
-helm-lint: helm-deps
-	helm lint --strict deploy/helm/codex-lb/ --set postgresql.auth.password=test-password
-	helm lint --strict deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-dev.yaml --set postgresql.auth.password=test-password
-	helm lint --strict deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-bundled.yaml --set postgresql.auth.password=test-password
-	helm lint --strict deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-external-db.yaml --set externalDatabase.url=postgresql+asyncpg://test:test@localhost/test
-	helm lint --strict deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-external-secrets.yaml --set externalSecrets.secretStoreRef.name=test-store
-	helm lint --strict deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-staging.yaml --set externalDatabase.url=postgresql+asyncpg://test:test@localhost/test
-	helm lint --strict deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-prod.yaml --set externalSecrets.secretStoreRef.name=test-store
-
-helm-template:
-	helm template codex-lb deploy/helm/codex-lb/ --set postgresql.auth.password=test-password > /dev/null
-	helm template codex-lb deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-dev.yaml --set postgresql.auth.password=test-password > /dev/null
-	helm template codex-lb deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-bundled.yaml --set postgresql.auth.password=test-password > /dev/null
-	helm template codex-lb deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-external-db.yaml --set externalDatabase.url=postgresql+asyncpg://test:test@localhost/test > /dev/null
-	helm template codex-lb deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-external-secrets.yaml --set externalSecrets.secretStoreRef.name=test-store > /dev/null
-	helm template codex-lb deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-staging.yaml --set externalDatabase.url=postgresql+asyncpg://test:test@localhost/test > /dev/null
-	helm template codex-lb deploy/helm/codex-lb/ -f deploy/helm/codex-lb/values-prod.yaml --set externalSecrets.secretStoreRef.name=test-store > /dev/null
-
-helm-kubeconform:
-	set -e -o pipefail; \
-	for version in 1.32.0 1.35.0; do \
-	  helm template codex-lb deploy/helm/codex-lb/ \
-	    -f deploy/helm/codex-lb/values-prod.yaml \
-	    --set externalSecrets.secretStoreRef.name=test \
-	    --set externalSecrets.secretStoreRef.kind=SecretStore \
-	    --set gatewayApi.enabled=true \
-	    --set "gatewayApi.parentRefs[0].name=test-gw" \
-	    --set "gatewayApi.hostnames[0]=test.example.com" \
-	    | kubeconform \
-	      -strict \
-	      -kubernetes-version "$${version}" \
-	      -schema-location default \
-	      -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-	      -summary; \
-	done
-
-.PHONY: helm-check helm-smoke-kind
-helm-check: helm-lint helm-template helm-kubeconform
-
-helm-smoke-kind:
-	kind create cluster --name codex-lb-smoke --image kindest/node:v1.35.0 --wait 120s
-	docker build -t ghcr.io/soju06/codex-lb:ci .
-	kind load docker-image ghcr.io/soju06/codex-lb:ci --name codex-lb-smoke
-	KUBE_CONTEXT=kind-codex-lb-smoke IMAGE_REGISTRY=ghcr.io IMAGE_REPOSITORY=soju06/codex-lb IMAGE_TAG=ci ./scripts/helm-kind-smoke.sh bundled
-	KUBE_CONTEXT=kind-codex-lb-smoke IMAGE_REGISTRY=ghcr.io IMAGE_REPOSITORY=soju06/codex-lb IMAGE_TAG=ci ./scripts/helm-kind-smoke.sh external-db
+package-bin: frontend-build
+	uv run python scripts/package_bin_bundle.py --skip-frontend
 
 .PHONY: ci-fast ci
 ci-fast: lint typecheck frontend-test test-unit package
 
 ci: frontend-lint frontend-typecheck frontend-test frontend-build lint typecheck \
 	test-unit test-integration-core test-integration-bridge test-e2e test-postgres \
-	migration-check migration-check-postgres package docker helm-check helm-smoke-kind
+	migration-check migration-check-postgres package package-bin

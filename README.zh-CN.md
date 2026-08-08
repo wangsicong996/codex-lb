@@ -50,15 +50,12 @@ ChatGPT 账户负载均衡器。聚合多个账户、追踪用量、管理 API K
 ## 快速开始
 
 ```bash
-# Docker（推荐）
-docker volume create codex-lb-data
-docker run -d --name codex-lb \
-  -p 2455:2455 -p 1455:1455 \
-  -v codex-lb-data:/var/lib/codex-lb \
-  ghcr.io/soju06/codex-lb:latest
-
-# 或者使用 uvx
+# uvx（主机推荐）
 uvx codex-lb
+
+# 或解压 Release 的 bin 包（Flatpak / 可重定位安装）
+tar -xzf codex-lb-<version>-bin.tar.gz
+./bin/codex-lb
 ```
 
 打开 [localhost:2455](http://localhost:2455) → 添加账户 → 完成。
@@ -70,23 +67,19 @@ uvx codex-lb
 **自动生成（默认）**：首次启动且未配置密码时，服务会生成一次性 token 并打印到日志中：
 
 ```bash
-docker logs codex-lb
+# 在进程日志中查找 first-run token 块
 # ============================================
 #   Dashboard bootstrap token (first-run):
 #   <token>
 # ============================================
 ```
 
-打开仪表盘 → 输入 token + 新密码 → 完成。该 token 在所有副本之间共享，并在密码设置完成前持续有效。在多副本部署中，副本之间必须共享同一份加密密钥（Helm chart 默认已配置），重启恢复才能正常工作。
+打开仪表盘 → 输入 token + 新密码 → 完成。该 token 在所有副本之间共享，并在密码设置完成前持续有效。多副本部署必须共享同一份加密密钥，重启恢复才能正常工作。
 
 **手动指定 token**：如果想用固定 token，可在启动前设置环境变量：
 
 ```bash
-docker run -d --name codex-lb \
-  -e CODEX_LB_DASHBOARD_BOOTSTRAP_TOKEN=your-secret-token \
-  -p 2455:2455 -p 1455:1455 \
-  -v codex-lb-data:/var/lib/codex-lb \
-  ghcr.io/soju06/codex-lb:latest
+CODEX_LB_DASHBOARD_BOOTSTRAP_TOKEN=your-secret-token uvx codex-lb
 ```
 
 **本地访问**（localhost）会完全跳过 bootstrap 流程 —— 不需要 token。
@@ -349,7 +342,7 @@ print(response.choices[0].message.content)
 
 ## API Key 鉴权
 
-API Key 鉴权**默认关闭**。在该模式下，对受保护代理路由的请求只有本地访问能直接放行；非本地请求在未配置代理鉴权之前会被拒绝。当客户端通过远程网络、Docker、虚拟机或容器网络（被服务视为非本地）连接时，请在仪表盘的 **设置 → API Key 鉴权** 中启用。
+API Key 鉴权**默认关闭**。在该模式下，对受保护代理路由的请求只有本地访问能直接放行；非本地请求在未配置代理鉴权之前会被拒绝。当客户端通过远程网络、虚拟机或容器网络（被服务视为非本地）连接时，请在仪表盘的 **设置 → API Key 鉴权** 中启用。
 
 启用后，客户端必须将有效的 API Key 作为 Bearer token 传入：
 
@@ -388,64 +381,39 @@ CODEX_LB_DASHBOARD_AUTH_PROXY_HEADER=Remote-User
 
 如果信任头缺失且未配置回退密码，仪表盘会 fail-closed 并显示"需要反向代理"的提示，而不是加载 UI。
 
-### Docker 示例
+### 环境变量示例
 
 **Authelia / 信任头**
 
 ```bash
-docker run -d --name codex-lb \
-  -p 2455:2455 -p 1455:1455 \
-  -e CODEX_LB_DASHBOARD_AUTH_MODE=trusted_header \
-  -e CODEX_LB_DASHBOARD_AUTH_PROXY_HEADER=Remote-User \
-  -e CODEX_LB_FIREWALL_TRUST_PROXY_HEADERS=true \
-  -e CODEX_LB_FIREWALL_TRUSTED_PROXY_CIDRS=172.18.0.0/16 \
-  -v codex-lb-data:/var/lib/codex-lb \
-  ghcr.io/soju06/codex-lb:latest
+CODEX_LB_DASHBOARD_AUTH_MODE=trusted_header \
+CODEX_LB_DASHBOARD_AUTH_PROXY_HEADER=Remote-User \
+CODEX_LB_FIREWALL_TRUST_PROXY_HEADERS=true \
+CODEX_LB_FIREWALL_TRUSTED_PROXY_CIDRS=172.18.0.0/16 \
+  uvx codex-lb
 ```
 
 **强制覆盖 / 无应用层仪表盘鉴权**
 
 ```bash
-docker run -d --name codex-lb \
-  -p 2455:2455 -p 1455:1455 \
-  -e CODEX_LB_DASHBOARD_AUTH_MODE=disabled \
-  -v codex-lb-data:/var/lib/codex-lb \
-  ghcr.io/soju06/codex-lb:latest
+CODEX_LB_DASHBOARD_AUTH_MODE=disabled uvx codex-lb
 ```
 
-Helm 部署可通过 `extraEnv` 传入相同变量。
 
 ## 数据
 
 | 环境 | 路径 |
 |-------------|------|
 | 本地 / uvx | `~/.codex-lb/` |
-| Docker | `/var/lib/codex-lb/` |
+| bin bundle / Flatpak | 设置 `CODEX_LB_DATA_DIR` |
 
 请备份此目录以保留你的数据。
 
-## Kubernetes
-
-```bash
-helm install codex-lb oci://ghcr.io/soju06/charts/codex-lb \
-  --set postgresql.auth.password=changeme \
-  --set config.databaseMigrateOnStartup=true \
-  --set migration.schemaGate.enabled=false
-kubectl port-forward svc/codex-lb 2455:2455
-```
-
-打开 [localhost:2455](http://localhost:2455) → 添加账户 → 完成。
-
-Helm chart 会基于 headless service 的 per-pod DNS 名称为多副本部署自动配置 HTTP `/responses` owner handoff。默认集群域名为 `cluster.local`；如果你的集群使用其它后缀，请在 Helm 中设置 `clusterDomain`。仅当 pod 必须通过其它内部地址访问时才需要覆盖 `config.sessionBridgeAdvertiseBaseUrl`。
-
-外部数据库、生产环境配置、Ingress、可观测性等更多内容，请参考 [Helm chart README](deploy/helm/codex-lb/README.md)。
+打包与 Flatpak 相关说明见 [Bin bundle / Flatpak](https://soju06.github.io/codex-lb/deployment/bin-bundle/)。
 
 ## 开发
 
 ```bash
-# Docker
-docker compose watch
-
 # 本地
 uv sync && cd frontend && bun install && cd ..
 uv run codex-lb                              # 后端 :2455
