@@ -15,26 +15,19 @@ permissions:
 
 jobs:
   publish-beta-release:
+    # Upstream beta publishing; skip when RELEASE_PLEASE_TOKEN is unset.
     if: >-
-      github.event.pull_request.merged == true &&
-      startsWith(github.event.pull_request.head.ref, 'release/beta-')
+      ${{
+        secrets.RELEASE_PLEASE_TOKEN != '' &&
+        github.event.pull_request.merged == true &&
+        startsWith(github.event.pull_request.head.ref, 'release/beta-')
+      }}
     runs-on: ubuntu-24.04
 
     env:
       GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
     steps:
-      - name: Require release automation token
-        shell: bash
-        env:
-          RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ -z "${RELEASE_PLEASE_TOKEN}" ]; then
-            echo "::error::RELEASE_PLEASE_TOKEN is required so beta release events trigger artifact publishing."
-            exit 1
-          fi
-
       - name: Checkout merged beta release commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:

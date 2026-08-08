@@ -701,7 +701,9 @@ jobs:
           test -x bin/codex-lb
           test -x bin/codex-lb-db
           test -d bin/vendor/app
-          PYTHONPATH=bin/vendor python3 -c "import app; import app.main; print('vendor import ok')"
+          # Native wheels (pydantic_core) require the same ABI as install (3.13).
+          PYTHONPATH=bin/vendor uv run --python 3.13 --no-project python -c \
+            "import app; import app.main; print('vendor import ok')"
           ls -la dist/*-bin.tar.gz
 
   ci-required:

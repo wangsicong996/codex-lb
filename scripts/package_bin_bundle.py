@@ -17,7 +17,6 @@ import argparse
 import os
 import shutil
 import subprocess
-import sys
 import tarfile
 import tomllib
 from pathlib import Path
@@ -27,6 +26,9 @@ LAUNCHERS: tuple[tuple[str, str], ...] = (
     ("codex-lb", "from app.cli import main; raise SystemExit(main())"),
     ("codex-lb-db", "from app.db.migrate import main; raise SystemExit(main())"),
 )
+
+# Native wheels in bin/vendor must be imported with this ABI.
+_BUNDLE_PYTHON = "3.13"
 
 
 def _repo_root() -> Path:
@@ -96,7 +98,7 @@ def build_bundle(root: Path, *, skip_frontend: bool) -> Path:
             "pip",
             "install",
             "--python",
-            "3.13",
+            _BUNDLE_PYTHON,
             "--target",
             str(vendor_dir),
             ".",
@@ -108,10 +110,21 @@ def build_bundle(root: Path, *, skip_frontend: bool) -> Path:
     for name, body in LAUNCHERS:
         _write_launcher(bin_dir / name, body)
 
+    # Must smoke-test with the same Python ABI used to install native wheels
+    # (e.g. pydantic_core). Bare `python3` on Ubuntu runners is often 3.12.
     smoke_env = env.copy()
     smoke_env["PYTHONPATH"] = str(vendor_dir)
     _run(
-        [sys.executable, "-c", "import app; import app.main; print('import ok')"],
+        [
+            "uv",
+            "run",
+            "--python",
+            _BUNDLE_PYTHON,
+            "--no-project",
+            "python",
+            "-c",
+            "import app; import app.main; print('import ok')",
+        ],
         cwd=root,
         env=smoke_env,
     )

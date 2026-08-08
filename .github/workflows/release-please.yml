@@ -16,6 +16,8 @@ permissions:
 
 jobs:
   release-please:
+    # Skip on forks/operators that do not configure RELEASE_PLEASE_TOKEN.
+    if: ${{ secrets.RELEASE_PLEASE_TOKEN != '' }}
     runs-on: ubuntu-24.04
     steps:
       - name: Run release-please

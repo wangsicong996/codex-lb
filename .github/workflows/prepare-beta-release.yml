@@ -17,26 +17,19 @@ permissions:
 
 jobs:
   sync-beta-release-pr:
+    # Upstream beta automation; skip cleanly when the fork has no release token.
+    # This workflow is independent of CI — it triggers on every push to main.
     if: >-
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion == 'success'
+      ${{
+        secrets.RELEASE_PLEASE_TOKEN != '' &&
+        (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+      }}
     runs-on: ubuntu-24.04
 
     env:
       GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
     steps:
-      - name: Require release automation token
-        shell: bash
-        env:
-          RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ -z "${RELEASE_PLEASE_TOKEN}" ]; then
-            echo "::error::RELEASE_PLEASE_TOKEN is required so beta release events trigger artifact publishing."
-            exit 1
-          fi
-
       - name: Checkout main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
