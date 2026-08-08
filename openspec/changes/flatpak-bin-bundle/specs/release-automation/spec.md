@@ -1,11 +1,12 @@
-# release-automation Specification
+## REMOVED Requirements
 
-## Purpose
+### Requirement: Superseded beta release PR cleanup
 
-Beta release PR sync/publish automation has been retired. Installable archives
-are delivered via CI Actions artifacts (see `release-management`).
+### Requirement: Beta release PR creation parity
 
-## Requirements
+### Requirement: Beta release PR changelog
+
+## ADDED Requirements
 
 ### Requirement: Beta release automation workflows are not maintained
 

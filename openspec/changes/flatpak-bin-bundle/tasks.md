@@ -12,8 +12,8 @@
 
 ## 3. Simplify GitHub Actions
 
-- [x] 3.1 Update ci.yml (drop docker/helm, add package-bin)
-- [x] 3.2 Update release.yml and beta workflows
+- [x] 3.1 Update ci.yml (drop docker/helm, add package-bin + artifact upload)
+- [x] 3.2 Remove release.yml, release-please, and beta release workflows/guards
 - [x] 3.3 Update dependabot, detect_changed_areas, sync_codex_ok_labels
 - [x] 3.4 Minimal docs/nav updates so mkdocs and tests stay coherent
 

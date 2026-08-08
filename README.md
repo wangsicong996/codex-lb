@@ -40,7 +40,7 @@ Load balancer for ChatGPT accounts. Pool multiple accounts, track usage, manage 
 # uvx (recommended on host)
 uvx codex-lb
 
-# or unpack a release bin bundle (Flatpak / relocatable)
+# or unpack a CI bin-bundle artifact (Flatpak / relocatable)
 tar -xzf codex-lb-<version>-bin.tar.gz
 ./bin/codex-lb
 ```

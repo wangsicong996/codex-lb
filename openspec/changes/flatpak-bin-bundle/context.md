@@ -2,7 +2,7 @@
 
 Flatpak consumers need a relocatable Python dependency tree that does not
 install into the host or runtime system site-packages. The project ships a
-`bin/` layout built by CI/Release; an external Flatpak manifest copies that
+`bin/` layout built by CI as an Actions artifact; an external Flatpak manifest copies that
 tree into `/app` (or equivalent) and uses the Flatpak Python 3.13 runtime.
 
 ## Decisions
@@ -10,6 +10,8 @@ tree into `/app` (or equivalent) and uses the Flatpak Python 3.13 runtime.
 - Vendor with `uv pip install --target bin/vendor` rather than bundling CPython.
 - Keep launchers as thin `PYTHONPATH` wrappers so Flatpak can `exec` them.
 - Delete Docker/Helm instead of leaving unsupported stubs that CI still builds.
+- Deliver `*-bin.tar.gz` via CI `upload-artifact` (`bin-bundle`); no GitHub Release
+  or Release Please publishing workflow.
 - Do not add a Flatpak manifest to this repository (external packaging owns it).
 
 ## Non-goals

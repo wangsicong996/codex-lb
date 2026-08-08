@@ -26,8 +26,9 @@ should be removed.
 
 - `deployment-installation`: replace Helm/Compose install contracts with the
   vendored `bin/` bundle contract; keep operator settings-surface rules.
-- `release-management`: publish PyPI + bin tarball; drop Docker/Helm artifacts
-  and Chart.yaml version guards.
+- `release-management`: deliver `*-bin.tar.gz` via CI Actions artifact
+  `bin-bundle`; remove GitHub Release / Release Please / beta-release publishing.
+- `release-automation`: retire beta release sync/publish workflow contracts.
 - `deployment-networking`: drop Docker/Helm networking requirements (network
   exposure is host/Flatpak operator-owned).
 

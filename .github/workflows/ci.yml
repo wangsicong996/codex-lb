@@ -76,59 +76,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: python .github/scripts/check_all_contributors.py
 
-  beta-release-guard:
-    name: Beta release guard
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Fetch PR base branch
-        if: github.event_name == 'pull_request'
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: git fetch origin "${BASE_REF}:refs/remotes/origin/${BASE_REF}" --force
-
-      - name: Require validated canonical beta release PRs
-        env:
-          BASE_REF: ${{ github.base_ref || 'main' }}
-          HEAD_REF: ${{ github.head_ref }}
-        run: |
-          python -m scripts.guard_beta_release \
-            --mode pr \
-            --base-ref "origin/${BASE_REF}" \
-            --head-ref "${HEAD_REF}"
-
-  stable-release-guard:
-    name: Stable release guard
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Fetch PR base branch
-        if: github.event_name == 'pull_request'
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: git fetch origin "${BASE_REF}:refs/remotes/origin/${BASE_REF}" --force
-
-      - name: Require complete release-please stable promotions
-        env:
-          BASE_REF: ${{ github.base_ref || 'main' }}
-          HEAD_REF: ${{ github.head_ref }}
-        run: |
-          python -m scripts.guard_stable_release \
-            --base-ref "origin/${BASE_REF}" \
-            --head-ref "${HEAD_REF}"
-
   frontend-lint:
     name: Frontend lint (eslint)
     runs-on: ubuntu-24.04
@@ -661,7 +608,6 @@ jobs:
     name: Package (bin bundle)
     runs-on: ubuntu-24.04
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
 
     steps:
       - name: Checkout repository
@@ -706,6 +652,14 @@ jobs:
             "import app; import app.main; print('vendor import ok')"
           ls -la dist/*-bin.tar.gz
 
+      - name: Upload bin bundle artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bin-bundle
+          path: dist/*-bin.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
   ci-required:
     name: CI Required
     runs-on: ubuntu-24.04
@@ -713,7 +667,6 @@ jobs:
     needs:
       - changes
       - contributors
-      - beta-release-guard
       - frontend-lint
       - frontend-typecheck
       - frontend-test

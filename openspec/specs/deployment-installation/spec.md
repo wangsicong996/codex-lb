@@ -17,10 +17,11 @@ under `bin/`) without writing to the system or runtime site-packages. The
 bundle MUST include executable launchers `bin/codex-lb` and `bin/codex-lb-db`
 that set `PYTHONPATH` to the vendored tree and invoke the application CLI /
 migration entrypoints. Packaging MUST build frontend static assets into the
-installed application package before creating the vendor tree. CI and Release
-MUST produce a versioned archive named `codex-lb-<version>-bin.tar.gz` whose
-archive root is the `bin/` directory. This repository MUST NOT ship a Flatpak
-manifest; external Flatpak packaging consumes the archive.
+installed application package before creating the vendor tree. CI MUST produce
+a versioned archive named `codex-lb-<version>-bin.tar.gz` whose archive root is
+the `bin/` directory and MUST upload it as a GitHub Actions workflow artifact.
+This repository MUST NOT ship a Flatpak manifest; external Flatpak packaging
+consumes the archive.
 
 #### Scenario: Local package-bin creates vendor tree and launchers
 
@@ -34,10 +35,10 @@ manifest; external Flatpak packaging consumes the archive.
 - **WHEN** `PYTHONPATH=bin/vendor` is set and the system site-packages lack project deps
 - **THEN** `python3 -c "import app; import app.main"` succeeds using only the vendor tree plus the interpreter stdlib
 
-#### Scenario: Release publishes the bin archive
+#### Scenario: CI publishes the bin archive as a workflow artifact
 
-- **WHEN** the Release workflow builds release artifacts
-- **THEN** it uploads `codex-lb-<version>-bin.tar.gz` to the GitHub Release alongside PyPI distributions
+- **WHEN** the CI `package-bin` job completes successfully
+- **THEN** it uploads `codex-lb-<version>-bin.tar.gz` as the Actions artifact `bin-bundle`
 
 ### Requirement: Owned launch paths preserve raw peer before proxy projection
 

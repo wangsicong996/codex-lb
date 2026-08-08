@@ -10,7 +10,8 @@ Normative requirements:
 
 ## Quick unpack
 
-Download `codex-lb-<version>-bin.tar.gz` from a GitHub Release, then:
+Download `codex-lb-<version>-bin.tar.gz` from the CI run’s **bin-bundle**
+Actions artifact, then:
 
 ```bash
 tar -xzf codex-lb-<version>-bin.tar.gz
