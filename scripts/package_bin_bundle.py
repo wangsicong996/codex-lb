@@ -21,14 +21,12 @@ import tarfile
 import tomllib
 from pathlib import Path
 
-
-LAUNCHERS: tuple[tuple[str, str], ...] = (
+# Native wheels in bin/vendor must be imported with this ABI.
+_BUNDLE_PYTHON = "3.13"
+_LAUNCHERS = (
     ("codex-lb", "from app.cli import main; raise SystemExit(main())"),
     ("codex-lb-db", "from app.db.migrate import main; raise SystemExit(main())"),
 )
-
-# Native wheels in bin/vendor must be imported with this ABI.
-_BUNDLE_PYTHON = "3.13"
 
 
 def _repo_root() -> Path:
@@ -107,7 +105,7 @@ def build_bundle(root: Path, *, skip_frontend: bool) -> Path:
         env=env,
     )
 
-    for name, body in LAUNCHERS:
+    for name, body in _LAUNCHERS:
         _write_launcher(bin_dir / name, body)
 
     # Must smoke-test with the same Python ABI used to install native wheels
