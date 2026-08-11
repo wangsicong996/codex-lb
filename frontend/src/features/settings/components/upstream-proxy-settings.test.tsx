@@ -164,7 +164,7 @@ describe("UpstreamProxySettings", () => {
     const endpointRow = screen.getByText("Primary proxy").closest("div");
     expect(endpointRow).not.toBeNull();
     await user.click(within(endpointRow as HTMLElement).getByRole("button", { name: "Delete endpoint Primary proxy" }));
-    const endpointDialog = await screen.findByRole("dialog");
+    const endpointDialog = await screen.findByRole("alertdialog");
     await user.click(within(endpointDialog).getByRole("button", { name: "Delete" }));
     await waitFor(() => {
       expect(onDeleteEndpoint).toHaveBeenCalledWith("ep_primary");
@@ -173,7 +173,7 @@ describe("UpstreamProxySettings", () => {
     const poolRow = screen.getByText("Primary pool").closest("div");
     expect(poolRow).not.toBeNull();
     await user.click(within(poolRow as HTMLElement).getByRole("button", { name: "Delete pool Primary pool" }));
-    const poolDialog = await screen.findByRole("dialog");
+    const poolDialog = await screen.findByRole("alertdialog");
     await user.click(within(poolDialog).getByRole("button", { name: "Delete" }));
     await waitFor(() => {
       expect(onDeletePool).toHaveBeenCalledWith("pool_primary");

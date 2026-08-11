@@ -126,7 +126,7 @@ export function SettingsPage() {
                   settings.limitWarmupPrompt,
                   settings.limitWarmupExhaustedThresholdPercent,
                   settings.limitWarmupIdleThresholdPercent,
-                  settings.limitWarmupDataSeconds,
+                  settings.limitWarmupCooldownSeconds,
                   settings.limitWarmupStaggeredIdleEnabled,
                   settings.proxyAccountResponseCreateLimit,
                   settings.proxyAccountStreamLimit,
