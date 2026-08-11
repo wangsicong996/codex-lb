@@ -81,12 +81,26 @@ def is_pre_dispatch_connection_failure(exc: BaseException) -> bool:
             (
                 aiohttp.ClientConnectorError,
                 aiohttp.ConnectionTimeoutError,
+                aiohttp.ServerDisconnectedError,
                 SocksProxyConnectionError,
                 PythonSocksProxyConnectionError,
             ),
         )
         for current in _exception_chain(exc)
     )
+
+
+def is_stale_proxy_keep_alive_failure(exc: BaseException) -> bool:
+    """Return whether a pre-response error looks like a half-closed keep-alive tunnel."""
+
+    for current in _exception_chain(exc):
+        if isinstance(current, aiohttp.ServerDisconnectedError):
+            return True
+        if isinstance(current, aiohttp.ClientConnectorError):
+            continue
+        if isinstance(current, aiohttp.ClientOSError) and not is_process_network_failure(current):
+            return True
+    return False
 
 
 def is_proxy_endpoint_failure(exc: BaseException) -> bool:

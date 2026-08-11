@@ -7,6 +7,8 @@ import {
   addUpstreamProxyPoolMember,
   createUpstreamProxyEndpoint,
   createUpstreamProxyPool,
+  deleteUpstreamProxyEndpoint,
+  deleteUpstreamProxyPool,
   getSettings,
   getUpstreamProxyAdmin,
   putAccountProxyBinding,
@@ -117,6 +119,30 @@ export function useUpstreamProxyAdmin() {
     },
   });
 
+  const deleteEndpointMutation = useMutation({
+    mutationFn: (endpointId: string) => deleteUpstreamProxyEndpoint(endpointId),
+    onSuccess: () => {
+      toast.success(t("upstreamProxy.toasts.endpointDeleted"));
+      void queryClient.invalidateQueries({ queryKey: ["settings", "upstream-proxy"] });
+      void queryClient.invalidateQueries({ queryKey: ["settings", "detail"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t("upstreamProxy.toasts.endpointDeleteFailed"));
+    },
+  });
+
+  const deletePoolMutation = useMutation({
+    mutationFn: (poolId: string) => deleteUpstreamProxyPool(poolId),
+    onSuccess: () => {
+      toast.success(t("upstreamProxy.toasts.poolDeleted"));
+      void queryClient.invalidateQueries({ queryKey: ["settings", "upstream-proxy"] });
+      void queryClient.invalidateQueries({ queryKey: ["settings", "detail"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t("upstreamProxy.toasts.poolDeleteFailed"));
+    },
+  });
+
   const testEndpointMutation = useMutation({
     mutationFn: (endpointId: string) => testUpstreamProxyEndpoint(endpointId),
     onSuccess: (result) => {
@@ -149,6 +175,8 @@ export function useUpstreamProxyAdmin() {
     createEndpointMutation,
     createPoolMutation,
     addPoolMemberMutation,
+    deleteEndpointMutation,
+    deletePoolMutation,
     testEndpointMutation,
     accountBindingMutation,
   };

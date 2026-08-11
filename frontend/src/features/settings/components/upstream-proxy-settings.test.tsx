@@ -12,8 +12,10 @@ function renderSettings(overrides: Partial<Parameters<typeof UpstreamProxySettin
     onSaveSettings: vi.fn().mockResolvedValue(undefined),
     onCreateEndpoint: vi.fn().mockResolvedValue(undefined),
     onTestEndpoint: vi.fn().mockResolvedValue({ endpointId: "ep_primary", ok: true }),
+    onDeleteEndpoint: vi.fn().mockResolvedValue(undefined),
     onCreatePool: vi.fn().mockResolvedValue(undefined),
     onAddPoolMember: vi.fn().mockResolvedValue(undefined),
+    onDeletePool: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 
@@ -137,8 +139,42 @@ describe("UpstreamProxySettings", () => {
 
     await user.click(screen.getByRole("button", { name: "Test" }));
 
-    expect(onTestEndpoint).toHaveBeenCalledWith("ep_primary");
+    await waitFor(() => {
+      expect(onTestEndpoint).toHaveBeenCalledWith("ep_primary");
+    });
     expect(await screen.findByText(/Connection ok/)).toBeInTheDocument();
     expect(screen.getByText(/HTTP 200/)).toBeInTheDocument();
+  });
+
+  it("lists delete before test on each endpoint row", () => {
+    renderSettings();
+
+    const endpointRow = screen.getByText("Primary proxy").closest("div");
+    expect(endpointRow).not.toBeNull();
+    const buttons = within(endpointRow as HTMLElement).getAllByRole("button");
+    expect(buttons.map((button) => button.textContent)).toEqual(["Delete", "Test"]);
+  });
+
+  it("deletes endpoints and pools after confirmation", async () => {
+    const user = userEvent.setup();
+    const { onDeleteEndpoint, onDeletePool } = renderSettings();
+
+    const endpointRow = screen.getByText("Primary proxy").closest("div");
+    expect(endpointRow).not.toBeNull();
+    await user.click(within(endpointRow as HTMLElement).getByRole("button", { name: "Delete endpoint Primary proxy" }));
+    const endpointDialog = await screen.findByRole("dialog");
+    await user.click(within(endpointDialog).getByRole("button", { name: "Delete" }));
+    await waitFor(() => {
+      expect(onDeleteEndpoint).toHaveBeenCalledWith("ep_primary");
+    });
+
+    const poolRow = screen.getByText("Primary pool").closest("div");
+    expect(poolRow).not.toBeNull();
+    await user.click(within(poolRow as HTMLElement).getByRole("button", { name: "Delete pool Primary pool" }));
+    const poolDialog = await screen.findByRole("dialog");
+    await user.click(within(poolDialog).getByRole("button", { name: "Delete" }));
+    await waitFor(() => {
+      expect(onDeletePool).toHaveBeenCalledWith("pool_primary");
+    });
   });
 });

@@ -560,6 +560,75 @@ async def test_upstream_proxy_admin_controls(async_client):
 
 
 @pytest.mark.asyncio
+
+async def test_upstream_proxy_delete_endpoint_and_pool(async_client):
+    endpoint = await async_client.post(
+        "/api/settings/upstream-proxy/endpoints",
+        json={
+            "name": "Proxy Delete",
+            "scheme": "http",
+            "host": "proxy.delete",
+            "port": 8080,
+        },
+    )
+    assert endpoint.status_code == 200
+    endpoint_id = endpoint.json()["id"]
+
+    pool = await async_client.post(
+        "/api/settings/upstream-proxy/pools",
+        json={"name": "Pool Delete", "endpointIds": [endpoint_id]},
+    )
+    assert pool.status_code == 200
+    pool_id = pool.json()["id"]
+
+    deleted_endpoint = await async_client.delete(f"/api/settings/upstream-proxy/endpoints/{endpoint_id}")
+    assert deleted_endpoint.status_code == 204
+
+    admin = await async_client.get("/api/settings/upstream-proxy")
+    assert admin.status_code == 200
+    assert admin.json()["endpoints"] == []
+    assert admin.json()["pools"][0]["endpointIds"] == []
+
+    deleted_pool = await async_client.delete(f"/api/settings/upstream-proxy/pools/{pool_id}")
+    assert deleted_pool.status_code == 204
+    admin = await async_client.get("/api/settings/upstream-proxy")
+    assert admin.json()["pools"] == []
+
+
+async def test_upstream_proxy_delete_pool_blocked_by_binding(async_client):
+    account_id = await _import_account(async_client, "acct_proxy_delete", "proxy-delete@example.com")
+
+    endpoint = await async_client.post(
+        "/api/settings/upstream-proxy/endpoints",
+        json={
+            "name": "Proxy Bound",
+            "scheme": "http",
+            "host": "proxy.bound",
+            "port": 8080,
+        },
+    )
+    assert endpoint.status_code == 200
+    pool = await async_client.post(
+        "/api/settings/upstream-proxy/pools",
+        json={"name": "Pool Bound", "endpointIds": [endpoint.json()["id"]]},
+    )
+    assert pool.status_code == 200
+    pool_id = pool.json()["id"]
+
+    binding = await async_client.put(
+        f"/api/settings/upstream-proxy/accounts/{account_id}/binding",
+        json={"poolId": pool_id, "isActive": True},
+    )
+    assert binding.status_code == 200
+
+    blocked = await async_client.delete(f"/api/settings/upstream-proxy/pools/{pool_id}")
+    assert blocked.status_code == 400
+    assert blocked.json()["error"]["code"] == "proxy_pool_in_use"
+
+    admin = await async_client.get("/api/settings/upstream-proxy")
+    assert any(pool["id"] == pool_id for pool in admin.json()["pools"])
+
+
 async def test_upstream_proxy_endpoint_test_probes_configured_proxy(async_client, monkeypatch):
     captured: dict[str, object] = {}
 

@@ -12,6 +12,7 @@ from app.core.resilience.network_recovery import (
     PROCESS_NETWORK_UNAVAILABLE_CODE,
     is_pre_dispatch_connection_failure,
     is_process_network_failure,
+    is_stale_proxy_keep_alive_failure,
 )
 from app.core.upstream_proxy import ResolvedProxyEndpoint, ResolvedUpstreamRoute
 
@@ -188,7 +189,13 @@ class CodexClient:
                     )
                 else:
                     try:
-                        response = await self._session.request(method, url, proxy=endpoint.proxy_url, **kwargs)
+                        response = await _request_via_http_proxy(
+                            self._session,
+                            method,
+                            url,
+                            endpoint,
+                            **kwargs,
+                        )
                     except Exception as exc:
                         raise _transport_error(
                             "request",
@@ -330,8 +337,30 @@ class CodexClient:
 def create_codex_session(*, max_clients: int = 10) -> Any:
     from app.core.clients.http import _build_ssl_context
 
-    connector = aiohttp.TCPConnector(limit=max_clients, ssl=_build_ssl_context())
+    connector = aiohttp.TCPConnector(
+        limit=max_clients,
+        ssl=_build_ssl_context(),
+        enable_cleanup_closed=True,
+    )
     return aiohttp.ClientSession(connector=connector, timeout=aiohttp.ClientTimeout(total=None), trust_env=False)
+
+
+async def _request_via_http_proxy(
+    session: Any,
+    method: str,
+    url: str,
+    endpoint: ResolvedProxyEndpoint,
+    **kwargs: Any,
+) -> Any:
+    try:
+        return await session.request(method, url, proxy=endpoint.proxy_url, **kwargs)
+    except Exception as first_exc:
+        if not is_stale_proxy_keep_alive_failure(first_exc):
+            raise
+        # Half-closed keep-alive tunnels often die only when reused. One
+        # immediate same-endpoint retry opens a fresh connection without
+        # rotating process-wide transport state.
+        return await session.request(method, url, proxy=endpoint.proxy_url, **kwargs)
 
 
 async def _request_via_socks_proxy(

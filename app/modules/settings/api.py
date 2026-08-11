@@ -289,6 +289,21 @@ async def test_upstream_proxy_endpoint(
     )
 
 
+
+@router.delete("/upstream-proxy/endpoints/{endpoint_id}", status_code=204)
+async def delete_upstream_proxy_endpoint(
+    endpoint_id: str,
+    _write_access=Depends(require_dashboard_write_access),
+    context: SettingsContext = Depends(get_settings_context),
+) -> None:
+    row = await context.session.get(ProxyEndpoint, endpoint_id)
+    if row is None:
+        raise DashboardBadRequestError("Proxy endpoint not found", code="proxy_endpoint_not_found")
+    await context.session.delete(row)
+    await context.session.commit()
+    await get_upstream_route_cache().invalidate()
+
+
 @router.post("/upstream-proxy/pools", response_model=UpstreamProxyPoolResponse)
 async def create_upstream_proxy_pool(
     payload: UpstreamProxyPoolCreateRequest,
@@ -316,6 +331,33 @@ async def create_upstream_proxy_pool(
         is_active=pool.is_active,
         endpoint_ids=endpoint_ids,
     )
+
+
+
+@router.delete("/upstream-proxy/pools/{pool_id}", status_code=204)
+async def delete_upstream_proxy_pool(
+    pool_id: str,
+    _write_access=Depends(require_dashboard_write_access),
+    context: SettingsContext = Depends(get_settings_context),
+) -> None:
+    pool = await context.session.get(ProxyPool, pool_id)
+    if pool is None:
+        raise DashboardBadRequestError("Proxy pool not found", code="proxy_pool_not_found")
+    binding_count = (
+        await context.session.execute(
+            select(AccountProxyBinding.id).where(AccountProxyBinding.pool_id == pool_id).limit(1)
+        )
+    ).scalar_one_or_none()
+    if binding_count is not None:
+        raise DashboardBadRequestError(
+            "Proxy pool is referenced by account bindings; unbind accounts before deleting",
+            code="proxy_pool_in_use",
+        )
+    await context.session.delete(pool)
+    await context.session.commit()
+    # Default-pool FK is ON DELETE SET NULL; drop both route and settings caches.
+    await get_upstream_route_cache().invalidate()
+    await get_settings_cache().invalidate()
 
 
 @router.post("/upstream-proxy/pools/{pool_id}/members", response_model=UpstreamProxyPoolResponse)

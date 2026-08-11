@@ -576,3 +576,64 @@ async def test_socks_websocket_cancel_during_enter_closes_local_session(
     assert session.closed == 1
     assert session.context.exited is False
     assert session.context.owned is False
+
+
+class _StaleKeepAliveSession(_Session):
+    def __init__(self, *, fail_forever_first_proxy: bool = False) -> None:
+        super().__init__()
+        self.fail_forever_first_proxy = fail_forever_first_proxy
+        self._first_proxy_attempts = 0
+
+    async def request(self, method: str, url: str, **kwargs: Any) -> _Response:
+        self.calls.append({"method": method, "url": url, **kwargs})
+        proxy = kwargs.get("proxy")
+        first_proxy = runtime_basic_auth_url("u", "p", "proxy.test:8080")
+        if proxy == first_proxy:
+            self._first_proxy_attempts += 1
+            if self.fail_forever_first_proxy or self._first_proxy_attempts == 1:
+                raise aiohttp.ServerDisconnectedError()
+        return _Response(headers={"content-type": "application/json"})
+
+
+@pytest.mark.asyncio
+async def test_stale_keep_alive_reconnects_same_endpoint(route: ResolvedUpstreamRoute) -> None:
+    session = _StaleKeepAliveSession()
+    client = CodexClient(session)
+
+    result = await client.request_with_route_metadata(
+        "POST",
+        "https://upstream.test",
+        route=route,
+        buffer_response=False,
+        json={"x": 1},
+    )
+
+    assert result.fallback_used is False
+    assert result.route.endpoint_id == "ep_1"
+    assert len(session.calls) == 2
+    assert [call["proxy"] for call in session.calls] == [
+        runtime_basic_auth_url("u", "p", "proxy.test:8080"),
+        runtime_basic_auth_url("u", "p", "proxy.test:8080"),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_stale_keep_alive_failure_falls_back_within_pool(route: ResolvedUpstreamRoute) -> None:
+    session = _StaleKeepAliveSession(fail_forever_first_proxy=True)
+    client = CodexClient(session)
+
+    result = await client.request_with_route_metadata(
+        "POST",
+        "https://upstream.test",
+        route=route,
+        buffer_response=False,
+        json={"x": 1},
+    )
+
+    assert result.fallback_used is True
+    assert result.route.endpoint_id == "ep_2"
+    assert [call["proxy"] for call in session.calls] == [
+        runtime_basic_auth_url("u", "p", "proxy.test:8080"),
+        runtime_basic_auth_url("u", "p", "proxy.test:8080"),
+        "http://proxy-two.test:8081",
+    ]

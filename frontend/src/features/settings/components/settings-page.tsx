@@ -40,6 +40,8 @@ export function SettingsPage() {
     createEndpointMutation,
     createPoolMutation,
     addPoolMemberMutation,
+    deleteEndpointMutation,
+    deletePoolMutation,
     testEndpointMutation,
   } = useUpstreamProxyAdmin();
   const authMode = useAuthStore((state) => state.authMode);
@@ -53,6 +55,8 @@ export function SettingsPage() {
     createEndpointMutation.isPending ||
     createPoolMutation.isPending ||
     addPoolMemberMutation.isPending ||
+    deleteEndpointMutation.isPending ||
+    deletePoolMutation.isPending ||
     testEndpointMutation.isPending;
   const controlsDisabled = busy || !canWrite;
   const error =
@@ -62,6 +66,8 @@ export function SettingsPage() {
     getErrorMessageOrNull(createEndpointMutation.error) ||
     getErrorMessageOrNull(createPoolMutation.error) ||
     getErrorMessageOrNull(addPoolMemberMutation.error) ||
+    getErrorMessageOrNull(deleteEndpointMutation.error) ||
+    getErrorMessageOrNull(deletePoolMutation.error) ||
     getErrorMessageOrNull(testEndpointMutation.error);
 
   const handleSave = async (payload: SettingsUpdateRequest) => {
@@ -165,10 +171,12 @@ export function SettingsPage() {
                   onSaveSettings={handleSave}
                   onCreateEndpoint={(payload) => createEndpointMutation.mutateAsync(payload)}
                   onTestEndpoint={(endpointId) => testEndpointMutation.mutateAsync(endpointId)}
+                  onDeleteEndpoint={(endpointId) => deleteEndpointMutation.mutateAsync(endpointId)}
                   onCreatePool={(payload) => createPoolMutation.mutateAsync(payload)}
                   onAddPoolMember={(poolId, payload) =>
                     addPoolMemberMutation.mutateAsync({ poolId, payload })
                   }
+                  onDeletePool={(poolId) => deletePoolMutation.mutateAsync(poolId)}
                 />
               ) : null}
               <ModelSourcesSettings disabled={controlsDisabled} />
