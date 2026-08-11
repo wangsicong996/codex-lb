@@ -41,13 +41,13 @@ from app.modules.settings.schemas import (
     RuntimeConnectAddressResponse,
     UpstreamProxyAdminResponse,
     UpstreamProxyEndpointCreateRequest,
-    UpstreamProxyEndpointUpdateRequest,
     UpstreamProxyEndpointResponse,
     UpstreamProxyEndpointTestResponse,
+    UpstreamProxyEndpointUpdateRequest,
     UpstreamProxyPoolCreateRequest,
-    UpstreamProxyPoolUpdateRequest,
     UpstreamProxyPoolMemberRequest,
     UpstreamProxyPoolResponse,
+    UpstreamProxyPoolUpdateRequest,
 )
 from app.modules.settings.service import DashboardSettingsUpdateData
 from app.modules.usage.additional_quota_keys import (
