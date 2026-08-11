@@ -41,9 +41,11 @@ from app.modules.settings.schemas import (
     RuntimeConnectAddressResponse,
     UpstreamProxyAdminResponse,
     UpstreamProxyEndpointCreateRequest,
+    UpstreamProxyEndpointUpdateRequest,
     UpstreamProxyEndpointResponse,
     UpstreamProxyEndpointTestResponse,
     UpstreamProxyPoolCreateRequest,
+    UpstreamProxyPoolUpdateRequest,
     UpstreamProxyPoolMemberRequest,
     UpstreamProxyPoolResponse,
 )
@@ -289,6 +291,30 @@ async def test_upstream_proxy_endpoint(
     )
 
 
+@router.put("/upstream-proxy/endpoints/{endpoint_id}", response_model=UpstreamProxyEndpointResponse)
+async def update_upstream_proxy_endpoint(
+    endpoint_id: str,
+    payload: UpstreamProxyEndpointUpdateRequest,
+    _write_access=Depends(require_dashboard_write_access),
+    context: SettingsContext = Depends(get_settings_context),
+) -> UpstreamProxyEndpointResponse:
+    row = await context.session.get(ProxyEndpoint, endpoint_id)
+    if row is None:
+        raise DashboardBadRequestError("Proxy endpoint not found", code="proxy_endpoint_not_found")
+    row.name = payload.name
+    row.scheme = payload.scheme
+    row.host = payload.host
+    row.port = payload.port
+    row.username = payload.username
+    row.is_active = payload.is_active
+    if payload.password:
+        row.password_encrypted = TokenEncryptor().encrypt(payload.password)
+    await context.session.commit()
+    await context.session.refresh(row)
+    await get_upstream_route_cache().invalidate()
+    return _proxy_endpoint_response(row)
+
+
 @router.delete("/upstream-proxy/endpoints/{endpoint_id}", status_code=204)
 async def delete_upstream_proxy_endpoint(
     endpoint_id: str,
@@ -324,6 +350,47 @@ async def create_upstream_proxy_pool(
             raise DashboardBadRequestError("Proxy endpoint not found", code="proxy_endpoint_not_found")
         raise
     await context.session.refresh(pool)
+    return UpstreamProxyPoolResponse(
+        id=pool.id,
+        name=pool.name,
+        is_active=pool.is_active,
+        endpoint_ids=endpoint_ids,
+    )
+
+
+@router.put("/upstream-proxy/pools/{pool_id}", response_model=UpstreamProxyPoolResponse)
+async def update_upstream_proxy_pool(
+    pool_id: str,
+    payload: UpstreamProxyPoolUpdateRequest,
+    _write_access=Depends(require_dashboard_write_access),
+    context: SettingsContext = Depends(get_settings_context),
+) -> UpstreamProxyPoolResponse:
+    pool = await context.session.get(ProxyPool, pool_id)
+    if pool is None:
+        raise DashboardBadRequestError("Proxy pool not found", code="proxy_pool_not_found")
+    endpoint_ids = list(dict.fromkeys(payload.endpoint_ids))
+    await _validate_proxy_endpoint_ids(context, endpoint_ids)
+    pool.name = payload.name
+    pool.is_active = payload.is_active
+    existing_members = (
+        (await context.session.execute(select(ProxyPoolMember).where(ProxyPoolMember.pool_id == pool_id)))
+        .scalars()
+        .all()
+    )
+    for member in existing_members:
+        await context.session.delete(member)
+    await context.session.flush()
+    for sort_order, endpoint_id in enumerate(endpoint_ids):
+        context.session.add(ProxyPoolMember(pool_id=pool.id, endpoint_id=endpoint_id, sort_order=sort_order))
+    try:
+        await context.session.commit()
+    except IntegrityError as exc:
+        await context.session.rollback()
+        if _is_missing_proxy_endpoint_error(exc):
+            raise DashboardBadRequestError("Proxy endpoint not found", code="proxy_endpoint_not_found")
+        raise
+    await context.session.refresh(pool)
+    await get_upstream_route_cache().invalidate()
     return UpstreamProxyPoolResponse(
         id=pool.id,
         name=pool.name,

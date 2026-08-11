@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Dashboard settings must expose upstream proxy routing controls
-The settings dashboard MUST allow operators to inspect upstream proxy routing state, enable or disable routing, choose the default proxy pool, create proxy endpoints, create proxy pools, add endpoints to pools, delete proxy endpoints, and delete proxy pools that are not referenced by account bindings.
+The settings dashboard MUST allow operators to inspect upstream proxy routing state, enable or disable routing, choose the default proxy pool, create proxy endpoints, create proxy pools, add endpoints to pools, delete proxy endpoints, delete proxy pools that are not referenced by account bindings, and edit existing proxy endpoints and pools.
 
 #### Scenario: Operator creates a pool from existing endpoints
 - **GIVEN** the upstream proxy admin API returns at least one endpoint
@@ -19,4 +19,17 @@ The settings dashboard MUST allow operators to inspect upstream proxy routing st
 - **GIVEN** the upstream proxy admin state lists pool `P`
 - **WHEN** an operator confirms delete for `P`
 - **THEN** the dashboard MUST call the pool delete API
+- **AND** refresh the displayed upstream proxy admin state
+
+
+#### Scenario: Operator edits an endpoint
+- **GIVEN** the upstream proxy admin state lists endpoint `E`
+- **WHEN** an operator opens the edit dialog for `E`, changes fields, and submits
+- **THEN** the dashboard MUST call the endpoint update API
+- **AND** refresh the displayed upstream proxy admin state
+
+#### Scenario: Operator edits a pool
+- **GIVEN** the upstream proxy admin state lists pool `P`
+- **WHEN** an operator opens the edit dialog for `P`, changes name or members, and submits
+- **THEN** the dashboard MUST call the pool update API
 - **AND** refresh the displayed upstream proxy admin state

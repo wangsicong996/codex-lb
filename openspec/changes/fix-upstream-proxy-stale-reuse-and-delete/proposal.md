@@ -33,6 +33,8 @@ endpoint reconnect, so a half-closed proxy tunnel becomes a hard failure.
 - `upstream-proxy-routing`
 - `frontend-architecture`
 
+- Add dashboard + API update for proxy endpoints and pools (name/scheme/host/port/credentials, pool name/membership).
+
 ## Impact
 
 Settings upstream-proxy admin API gains `DELETE` routes. Dashboard Settings

@@ -18,7 +18,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import type {
   UpstreamProxyEndpoint,
+  UpstreamProxyPool,
   UpstreamProxyPoolCreateRequest,
+  UpstreamProxyPoolUpdateRequest,
 } from "@/features/settings/schemas";
 
 type FormValues = {
@@ -29,27 +31,32 @@ export type ProxyPoolCreateDialogProps = {
   open: boolean;
   busy: boolean;
   endpoints: UpstreamProxyEndpoint[];
+  pool?: UpstreamProxyPool | null;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (payload: UpstreamProxyPoolCreateRequest) => Promise<unknown>;
+  onSubmit: (payload: UpstreamProxyPoolCreateRequest | UpstreamProxyPoolUpdateRequest) => Promise<unknown>;
 };
 
 type ProxyPoolCreateFormProps = {
   busy: boolean;
   endpoints: UpstreamProxyEndpoint[];
+  pool?: UpstreamProxyPool | null;
   onClose: () => void;
-  onSubmit: (payload: UpstreamProxyPoolCreateRequest) => Promise<unknown>;
+  onSubmit: (payload: UpstreamProxyPoolCreateRequest | UpstreamProxyPoolUpdateRequest) => Promise<unknown>;
 };
 
-function ProxyPoolCreateForm({ busy, endpoints, onClose, onSubmit }: ProxyPoolCreateFormProps) {
+function ProxyPoolCreateForm({ busy, endpoints, pool, onClose, onSubmit }: ProxyPoolCreateFormProps) {
   const { t } = useTranslation();
+  const editing = pool != null;
   const formSchema = z.object({
     name: z.string().trim().min(1, t("upstreamProxy.validation.nameRequired")),
   });
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: pool?.name ?? "" },
   });
-  const [selectedEndpointIds, setSelectedEndpointIds] = useState<Set<string>>(new Set());
+  const [selectedEndpointIds, setSelectedEndpointIds] = useState<Set<string>>(
+    () => new Set(pool?.endpointIds ?? []),
+  );
 
   const toggleEndpoint = (endpointId: string, checked: boolean) => {
     setSelectedEndpointIds((current) => {
@@ -64,10 +71,10 @@ function ProxyPoolCreateForm({ busy, endpoints, onClose, onSubmit }: ProxyPoolCr
   };
 
   const handleSubmit = async (values: FormValues) => {
-    const payload: UpstreamProxyPoolCreateRequest = {
+    const payload: UpstreamProxyPoolCreateRequest | UpstreamProxyPoolUpdateRequest = {
       name: values.name.trim(),
       endpointIds: [...selectedEndpointIds],
-      isActive: true,
+      isActive: pool?.isActive ?? true,
     };
 
     try {
@@ -87,9 +94,9 @@ function ProxyPoolCreateForm({ busy, endpoints, onClose, onSubmit }: ProxyPoolCr
           name="name"
           render={({ field }) => (
             <FormItem>
-	              <FormLabel>{t("upstreamProxy.poolDialog.poolName")}</FormLabel>
-	              <FormControl>
-	                <Input {...field} autoComplete="off" placeholder={t("upstreamProxy.poolDialog.placeholders.name")} />
+              <FormLabel>{t("upstreamProxy.poolDialog.poolName")}</FormLabel>
+              <FormControl>
+                <Input {...field} autoComplete="off" placeholder={t("upstreamProxy.poolDialog.placeholders.name")} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -97,13 +104,11 @@ function ProxyPoolCreateForm({ busy, endpoints, onClose, onSubmit }: ProxyPoolCr
         />
 
         <div className="space-y-1.5">
-	          <p className="text-sm font-medium">{t("upstreamProxy.endpoints.title")}</p>
-	          <p className="text-xs text-muted-foreground">
-	            {t("upstreamProxy.poolDialog.endpointsDescription")}
-	          </p>
+          <p className="text-sm font-medium">{t("upstreamProxy.endpoints.title")}</p>
+          <p className="text-xs text-muted-foreground">{t("upstreamProxy.poolDialog.endpointsDescription")}</p>
           <div className="max-h-48 space-y-2 overflow-y-auto overscroll-contain rounded-md border p-2">
             {endpoints.length === 0 ? (
-	              <p className="text-xs text-muted-foreground">{t("upstreamProxy.poolDialog.createEndpointFirst")}</p>
+              <p className="text-xs text-muted-foreground">{t("upstreamProxy.poolDialog.createEndpointFirst")}</p>
             ) : (
               endpoints.map((endpoint) => (
                 <label
@@ -130,7 +135,7 @@ function ProxyPoolCreateForm({ busy, endpoints, onClose, onSubmit }: ProxyPoolCr
 
         <DialogFooter className="mt-2">
           <Button type="submit" disabled={busy || form.formState.isSubmitting}>
-	            {t("upstreamProxy.actions.createPool")}
+            {editing ? t("upstreamProxy.actions.savePool") : t("upstreamProxy.actions.createPool")}
           </Button>
         </DialogFooter>
       </form>
@@ -138,21 +143,33 @@ function ProxyPoolCreateForm({ busy, endpoints, onClose, onSubmit }: ProxyPoolCr
   );
 }
 
-export function ProxyPoolCreateDialog({ open, busy, endpoints, onOpenChange, onSubmit }: ProxyPoolCreateDialogProps) {
+export function ProxyPoolCreateDialog({
+  open,
+  busy,
+  endpoints,
+  pool = null,
+  onOpenChange,
+  onSubmit,
+}: ProxyPoolCreateDialogProps) {
   const { t } = useTranslation();
+  const editing = pool != null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {open ? (
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-	            <DialogTitle>{t("upstreamProxy.poolDialog.title")}</DialogTitle>
-	            <DialogDescription>
-	              {t("upstreamProxy.poolDialog.description")}
-	            </DialogDescription>
+            <DialogTitle>
+              {editing ? t("upstreamProxy.poolDialog.editTitle") : t("upstreamProxy.poolDialog.title")}
+            </DialogTitle>
+            <DialogDescription>
+              {editing ? t("upstreamProxy.poolDialog.editDescription") : t("upstreamProxy.poolDialog.description")}
+            </DialogDescription>
           </DialogHeader>
           <ProxyPoolCreateForm
+            key={pool?.id ?? "create"}
             busy={busy}
             endpoints={endpoints}
+            pool={pool}
             onClose={() => onOpenChange(false)}
             onSubmit={onSubmit}
           />

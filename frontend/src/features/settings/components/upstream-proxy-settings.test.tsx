@@ -11,9 +11,11 @@ function renderSettings(overrides: Partial<Parameters<typeof UpstreamProxySettin
     busy: false,
     onSaveSettings: vi.fn().mockResolvedValue(undefined),
     onCreateEndpoint: vi.fn().mockResolvedValue(undefined),
+    onUpdateEndpoint: vi.fn().mockResolvedValue(undefined),
     onTestEndpoint: vi.fn().mockResolvedValue({ endpointId: "ep_primary", ok: true }),
     onDeleteEndpoint: vi.fn().mockResolvedValue(undefined),
     onCreatePool: vi.fn().mockResolvedValue(undefined),
+    onUpdatePool: vi.fn().mockResolvedValue(undefined),
     onAddPoolMember: vi.fn().mockResolvedValue(undefined),
     onDeletePool: vi.fn().mockResolvedValue(undefined),
     ...overrides,
@@ -146,13 +148,13 @@ describe("UpstreamProxySettings", () => {
     expect(screen.getByText(/HTTP 200/)).toBeInTheDocument();
   });
 
-  it("lists delete before test on each endpoint row", () => {
+  it("lists edit before delete before test on each endpoint row", () => {
     renderSettings();
 
     const endpointRow = screen.getByText("Primary proxy").closest("div");
     expect(endpointRow).not.toBeNull();
     const buttons = within(endpointRow as HTMLElement).getAllByRole("button");
-    expect(buttons.map((button) => button.textContent)).toEqual(["Delete", "Test"]);
+    expect(buttons.map((button) => button.textContent)).toEqual(["Edit", "Delete", "Test"]);
   });
 
   it("deletes endpoints and pools after confirmation", async () => {

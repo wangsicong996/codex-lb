@@ -8,9 +8,11 @@ import {
   UpstreamProxyEndpointCreateRequestSchema,
   UpstreamProxyEndpointSchema,
   UpstreamProxyEndpointTestResponseSchema,
+  UpstreamProxyEndpointUpdateRequestSchema,
   UpstreamProxyPoolCreateRequestSchema,
   UpstreamProxyPoolMemberRequestSchema,
   UpstreamProxyPoolSchema,
+  UpstreamProxyPoolUpdateRequestSchema,
 } from "@/features/settings/schemas";
 
 const SETTINGS_PATH = "/api/settings";
@@ -49,6 +51,13 @@ export function deleteUpstreamProxyEndpoint(endpointId: string) {
   return del(`${UPSTREAM_PROXY_PATH}/endpoints/${encodeURIComponent(endpointId)}`);
 }
 
+export function updateUpstreamProxyEndpoint(endpointId: string, payload: unknown) {
+  const validated = UpstreamProxyEndpointUpdateRequestSchema.parse(payload);
+  return put(`${UPSTREAM_PROXY_PATH}/endpoints/${encodeURIComponent(endpointId)}`, UpstreamProxyEndpointSchema, {
+    body: validated,
+  });
+}
+
 export function createUpstreamProxyPool(payload: unknown) {
   const validated = UpstreamProxyPoolCreateRequestSchema.parse(payload);
   return post(`${UPSTREAM_PROXY_PATH}/pools`, UpstreamProxyPoolSchema, {
@@ -65,6 +74,13 @@ export function addUpstreamProxyPoolMember(poolId: string, payload: unknown) {
 
 export function deleteUpstreamProxyPool(poolId: string) {
   return del(`${UPSTREAM_PROXY_PATH}/pools/${encodeURIComponent(poolId)}`);
+}
+
+export function updateUpstreamProxyPool(poolId: string, payload: unknown) {
+  const validated = UpstreamProxyPoolUpdateRequestSchema.parse(payload);
+  return put(`${UPSTREAM_PROXY_PATH}/pools/${encodeURIComponent(poolId)}`, UpstreamProxyPoolSchema, {
+    body: validated,
+  });
 }
 
 export function putAccountProxyBinding(accountId: string, payload: unknown) {

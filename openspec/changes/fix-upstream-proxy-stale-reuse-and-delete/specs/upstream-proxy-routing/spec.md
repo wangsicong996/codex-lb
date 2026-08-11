@@ -44,3 +44,35 @@ upstream route cache MUST be invalidated before the response returns.
 - **WHEN** an admin deletes `P`
 - **THEN** the API returns a dashboard validation error
 - **AND** pool `P` remains in admin state
+
+
+### Requirement: Operators can update existing upstream proxy endpoints
+
+The upstream proxy admin API MUST allow an authenticated dashboard writer to
+update an existing proxy endpoint's name, scheme, host, port, username,
+optional password, and active flag. When the update omits a new password, the
+stored password MUST remain unchanged. Credentials MUST NOT be returned in the
+response. The upstream route cache MUST be invalidated before the response returns.
+
+#### Scenario: Endpoint update changes host and keeps password
+
+- **GIVEN** endpoint `E` exists with a stored password
+- **WHEN** an admin updates `E` host/port without a password field
+- **THEN** the API returns the updated endpoint metadata
+- **AND** the stored password remains unchanged
+- **AND** the upstream route cache is invalidated
+
+### Requirement: Operators can update existing upstream proxy pools
+
+The upstream proxy admin API MUST allow an authenticated dashboard writer to
+update an existing proxy pool's name, active flag, and membership list. Updating
+membership MUST replace the pool's endpoint membership with the supplied ordered
+endpoint ids. The upstream route cache MUST be invalidated before the response
+returns.
+
+#### Scenario: Pool update replaces membership
+
+- **GIVEN** pool `P` contains endpoints `A` and `B`
+- **WHEN** an admin updates `P` with endpoint ids `[B, C]`
+- **THEN** pool `P` membership becomes `B` then `C`
+- **AND** the upstream route cache is invalidated

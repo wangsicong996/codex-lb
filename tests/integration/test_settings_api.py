@@ -560,6 +560,63 @@ async def test_upstream_proxy_admin_controls(async_client):
 
 
 @pytest.mark.asyncio
+async def test_upstream_proxy_update_endpoint_and_pool(async_client):
+    endpoint = await async_client.post(
+        "/api/settings/upstream-proxy/endpoints",
+        json={
+            "name": "Proxy Edit",
+            "scheme": "http",
+            "host": "proxy.edit",
+            "port": 8080,
+            "username": "user",
+            "password": "secret",
+        },
+    )
+    assert endpoint.status_code == 200
+    endpoint_id = endpoint.json()["id"]
+
+    other = await async_client.post(
+        "/api/settings/upstream-proxy/endpoints",
+        json={"name": "Proxy Other", "scheme": "socks5", "host": "proxy.other", "port": 1080},
+    )
+    assert other.status_code == 200
+    other_id = other.json()["id"]
+
+    pool = await async_client.post(
+        "/api/settings/upstream-proxy/pools",
+        json={"name": "Pool Edit", "endpointIds": [endpoint_id]},
+    )
+    assert pool.status_code == 200
+    pool_id = pool.json()["id"]
+
+    updated_endpoint = await async_client.put(
+        f"/api/settings/upstream-proxy/endpoints/{endpoint_id}",
+        json={
+            "name": "Proxy Edited",
+            "scheme": "socks5h",
+            "host": "proxy.edited",
+            "port": 1081,
+            "username": "new-user",
+            "isActive": True,
+        },
+    )
+    assert updated_endpoint.status_code == 200
+    assert updated_endpoint.json()["name"] == "Proxy Edited"
+    assert updated_endpoint.json()["scheme"] == "socks5h"
+    assert updated_endpoint.json()["host"] == "proxy.edited"
+    assert updated_endpoint.json()["port"] == 1081
+    assert "password" not in updated_endpoint.json()
+
+    updated_pool = await async_client.put(
+        f"/api/settings/upstream-proxy/pools/{pool_id}",
+        json={"name": "Pool Edited", "endpointIds": [other_id, endpoint_id], "isActive": True},
+    )
+    assert updated_pool.status_code == 200
+    assert updated_pool.json()["name"] == "Pool Edited"
+    assert updated_pool.json()["endpointIds"] == [other_id, endpoint_id]
+
+
+@pytest.mark.asyncio
 async def test_upstream_proxy_delete_endpoint_and_pool(async_client):
     endpoint = await async_client.post(
         "/api/settings/upstream-proxy/endpoints",

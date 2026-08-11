@@ -14,13 +14,17 @@ import {
   putAccountProxyBinding,
   testUpstreamProxyEndpoint,
   updateSettings,
+  updateUpstreamProxyEndpoint,
+  updateUpstreamProxyPool,
 } from "@/features/settings/api";
 import type { SettingsUpdateRequest } from "@/features/settings/schemas";
 import type {
   AccountProxyBindingRequest,
   UpstreamProxyEndpointCreateRequest,
+  UpstreamProxyEndpointUpdateRequest,
   UpstreamProxyPoolCreateRequest,
   UpstreamProxyPoolMemberRequest,
+  UpstreamProxyPoolUpdateRequest,
 } from "@/features/settings/schemas";
 
 export function useSettings() {
@@ -143,6 +147,37 @@ export function useUpstreamProxyAdmin() {
     },
   });
 
+  const updateEndpointMutation = useMutation({
+    mutationFn: ({
+      endpointId,
+      payload,
+    }: {
+      endpointId: string;
+      payload: UpstreamProxyEndpointUpdateRequest;
+    }) => updateUpstreamProxyEndpoint(endpointId, payload),
+    onSuccess: () => {
+      toast.success(t("upstreamProxy.toasts.endpointUpdated"));
+      void queryClient.invalidateQueries({ queryKey: ["settings", "upstream-proxy"] });
+      void queryClient.invalidateQueries({ queryKey: ["settings", "detail"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t("upstreamProxy.toasts.endpointUpdateFailed"));
+    },
+  });
+
+  const updatePoolMutation = useMutation({
+    mutationFn: ({ poolId, payload }: { poolId: string; payload: UpstreamProxyPoolUpdateRequest }) =>
+      updateUpstreamProxyPool(poolId, payload),
+    onSuccess: () => {
+      toast.success(t("upstreamProxy.toasts.poolUpdated"));
+      void queryClient.invalidateQueries({ queryKey: ["settings", "upstream-proxy"] });
+      void queryClient.invalidateQueries({ queryKey: ["settings", "detail"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t("upstreamProxy.toasts.poolUpdateFailed"));
+    },
+  });
+
   const testEndpointMutation = useMutation({
     mutationFn: (endpointId: string) => testUpstreamProxyEndpoint(endpointId),
     onSuccess: (result) => {
@@ -177,6 +212,8 @@ export function useUpstreamProxyAdmin() {
     addPoolMemberMutation,
     deleteEndpointMutation,
     deletePoolMutation,
+    updateEndpointMutation,
+    updatePoolMutation,
     testEndpointMutation,
     accountBindingMutation,
   };

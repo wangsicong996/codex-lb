@@ -220,6 +220,17 @@ class UpstreamProxyEndpointTestResponse(DashboardModel):
     error: str | None = None
 
 
+class UpstreamProxyEndpointUpdateRequest(DashboardModel):
+    name: str = Field(min_length=1, max_length=128)
+    scheme: str = Field(pattern=r"^(http|https|socks5|socks5h)$")
+    host: str = Field(min_length=1, max_length=255)
+    port: int = Field(ge=1, le=65535)
+    username: str | None = Field(default=None, max_length=255)
+    # Omitted/null keeps the stored secret; a non-empty value replaces it.
+    password: str | None = Field(default=None, max_length=1024)
+    is_active: bool = True
+
+
 class UpstreamProxyPoolCreateRequest(DashboardModel):
     name: str = Field(min_length=1, max_length=128)
     endpoint_ids: list[str] = Field(default_factory=list)
@@ -230,6 +241,12 @@ class UpstreamProxyPoolMemberRequest(DashboardModel):
     endpoint_id: str = Field(min_length=1)
     sort_order: int = 0
     weight: int = Field(default=1, ge=1)
+    is_active: bool = True
+
+
+class UpstreamProxyPoolUpdateRequest(DashboardModel):
+    name: str = Field(min_length=1, max_length=128)
+    endpoint_ids: list[str] = Field(default_factory=list)
     is_active: bool = True
 
 

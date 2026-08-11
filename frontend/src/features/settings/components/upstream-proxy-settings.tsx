@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Boxes, CheckCircle2, Loader2, Network, Plus, Server, Trash2, XCircle } from "lucide-react";
+import { Boxes, CheckCircle2, Loader2, Network, Pencil, Plus, Server, Trash2, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -9,11 +9,18 @@ import { Switch } from "@/components/ui/switch";
 import { ProxyEndpointCreateDialog } from "@/features/settings/components/proxy-endpoint-create-dialog";
 import { ProxyPoolCreateDialog } from "@/features/settings/components/proxy-pool-create-dialog";
 import { ProxyPoolMemberDialog } from "@/features/settings/components/proxy-pool-member-dialog";
-import type { SettingsUpdateRequest, UpstreamProxyAdmin, UpstreamProxyEndpoint, UpstreamProxyPool } from "@/features/settings/schemas";
 import type {
+  SettingsUpdateRequest,
+  UpstreamProxyAdmin,
+  UpstreamProxyEndpoint,
   UpstreamProxyEndpointCreateRequest,
-  UpstreamProxyEndpointTestResponse,
+  UpstreamProxyEndpointUpdateRequest,
+  UpstreamProxyPool,
   UpstreamProxyPoolCreateRequest,
+  UpstreamProxyPoolUpdateRequest,
+} from "@/features/settings/schemas";
+import type {
+  UpstreamProxyEndpointTestResponse,
   UpstreamProxyPoolMemberRequest,
 } from "@/features/settings/schemas";
 import { useDialogState } from "@/hooks/use-dialog-state";
@@ -25,9 +32,11 @@ export type UpstreamProxySettingsProps = {
   busy: boolean;
   onSaveSettings: (payload: SettingsUpdateRequest) => Promise<void>;
   onCreateEndpoint: (payload: UpstreamProxyEndpointCreateRequest) => Promise<unknown>;
+  onUpdateEndpoint: (endpointId: string, payload: UpstreamProxyEndpointUpdateRequest) => Promise<unknown>;
   onTestEndpoint: (endpointId: string) => Promise<UpstreamProxyEndpointTestResponse>;
   onDeleteEndpoint: (endpointId: string) => Promise<unknown>;
   onCreatePool: (payload: UpstreamProxyPoolCreateRequest) => Promise<unknown>;
+  onUpdatePool: (poolId: string, payload: UpstreamProxyPoolUpdateRequest) => Promise<unknown>;
   onAddPoolMember: (poolId: string, payload: UpstreamProxyPoolMemberRequest) => Promise<unknown>;
   onDeletePool: (poolId: string) => Promise<unknown>;
 };
@@ -37,9 +46,11 @@ export function UpstreamProxySettings({
   busy,
   onSaveSettings,
   onCreateEndpoint,
+  onUpdateEndpoint,
   onTestEndpoint,
   onDeleteEndpoint,
   onCreatePool,
+  onUpdatePool,
   onAddPoolMember,
   onDeletePool,
 }: UpstreamProxySettingsProps) {
@@ -47,6 +58,8 @@ export function UpstreamProxySettings({
   const endpointDialog = useDialogState();
   const poolDialog = useDialogState();
   const memberDialog = useDialogState();
+  const editEndpointDialog = useDialogState<UpstreamProxyEndpoint>();
+  const editPoolDialog = useDialogState<UpstreamProxyPool>();
   const deleteEndpointDialog = useDialogState<UpstreamProxyEndpoint>();
   const deletePoolDialog = useDialogState<UpstreamProxyPool>();
   const [testingEndpointId, setTestingEndpointId] = useState<string | null>(null);
@@ -78,9 +91,7 @@ export function UpstreamProxySettings({
             </div>
             <div>
               <h3 className="text-sm font-semibold">{t("upstreamProxy.title")}</h3>
-              <p className="text-xs text-muted-foreground">
-                {t("upstreamProxy.description")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("upstreamProxy.description")}</p>
             </div>
           </div>
           <Switch
@@ -95,9 +106,7 @@ export function UpstreamProxySettings({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-medium">{t("upstreamProxy.defaultPool.title")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t("upstreamProxy.defaultPool.description")}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("upstreamProxy.defaultPool.description")}</p>
             </div>
             <Select
               value={admin.defaultPoolId ?? NO_POOL_VALUE}
@@ -185,6 +194,18 @@ export function UpstreamProxySettings({
                             type="button"
                             size="sm"
                             variant="outline"
+                            className="h-7 gap-1 px-2 text-xs"
+                            disabled={busy}
+                            aria-label={t("upstreamProxy.actions.editEndpoint", { name: endpoint.name })}
+                            onClick={() => editEndpointDialog.show(endpoint)}
+                          >
+                            <Pencil className="h-3 w-3" aria-hidden="true" />
+                            {t("common.actions.edit")}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
                             className="h-7 gap-1 px-2 text-xs text-destructive hover:text-destructive"
                             disabled={busy}
                             aria-label={t("upstreamProxy.actions.deleteEndpoint", { name: endpoint.name })}
@@ -222,7 +243,9 @@ export function UpstreamProxySettings({
                             <XCircle className="h-3 w-3" aria-hidden="true" />
                           )}
                           <span>
-                            {result.ok ? t("upstreamProxy.endpoints.connectionOk") : t("upstreamProxy.endpoints.connectionFailed")}
+                            {result.ok
+                              ? t("upstreamProxy.endpoints.connectionOk")
+                              : t("upstreamProxy.endpoints.connectionFailed")}
                             {result.statusCode != null ? ` · HTTP ${result.statusCode}` : null}
                             {result.elapsedMs != null ? ` · ${result.elapsedMs}ms` : null}
                             {result.error ? ` · ${result.error}` : null}
@@ -263,6 +286,18 @@ export function UpstreamProxySettings({
                         type="button"
                         size="sm"
                         variant="outline"
+                        className="h-7 gap-1 px-2 text-xs"
+                        disabled={busy}
+                        aria-label={t("upstreamProxy.actions.editPool", { name: pool.name })}
+                        onClick={() => editPoolDialog.show(pool)}
+                      >
+                        <Pencil className="h-3 w-3" aria-hidden="true" />
+                        {t("common.actions.edit")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
                         className="h-7 gap-1 px-2 text-xs text-destructive hover:text-destructive"
                         disabled={busy}
                         aria-label={t("upstreamProxy.actions.deletePool", { name: pool.name })}
@@ -288,12 +323,39 @@ export function UpstreamProxySettings({
         onOpenChange={endpointDialog.onOpenChange}
         onSubmit={onCreateEndpoint}
       />
+      <ProxyEndpointCreateDialog
+        open={editEndpointDialog.open}
+        busy={busy}
+        endpoint={editEndpointDialog.data}
+        onOpenChange={editEndpointDialog.onOpenChange}
+        onSubmit={async (payload) => {
+          const endpoint = editEndpointDialog.data;
+          if (!endpoint) {
+            return;
+          }
+          await onUpdateEndpoint(endpoint.id, payload);
+        }}
+      />
       <ProxyPoolCreateDialog
         open={poolDialog.open}
         busy={busy}
         endpoints={admin.endpoints}
         onOpenChange={poolDialog.onOpenChange}
         onSubmit={onCreatePool}
+      />
+      <ProxyPoolCreateDialog
+        open={editPoolDialog.open}
+        busy={busy}
+        endpoints={admin.endpoints}
+        pool={editPoolDialog.data}
+        onOpenChange={editPoolDialog.onOpenChange}
+        onSubmit={async (payload) => {
+          const pool = editPoolDialog.data;
+          if (!pool) {
+            return;
+          }
+          await onUpdatePool(pool.id, payload);
+        }}
       />
       <ProxyPoolMemberDialog
         open={memberDialog.open}

@@ -42,6 +42,8 @@ export function SettingsPage() {
     addPoolMemberMutation,
     deleteEndpointMutation,
     deletePoolMutation,
+    updateEndpointMutation,
+    updatePoolMutation,
     testEndpointMutation,
   } = useUpstreamProxyAdmin();
   const authMode = useAuthStore((state) => state.authMode);
@@ -50,14 +52,18 @@ export function SettingsPage() {
   const canWrite = useAuthStore((state) => state.canWrite);
 
   const settings = settingsQuery.data;
-  const busy =
+  // Endpoint probes are not settings writes — keep them out of the page-wide
+  // "Saving settings..." overlay and disable only the in-row Test spinner.
+  const savingBusy =
     updateSettingsMutation.isPending ||
     createEndpointMutation.isPending ||
     createPoolMutation.isPending ||
     addPoolMemberMutation.isPending ||
     deleteEndpointMutation.isPending ||
     deletePoolMutation.isPending ||
-    testEndpointMutation.isPending;
+    updateEndpointMutation.isPending ||
+    updatePoolMutation.isPending;
+  const busy = savingBusy;
   const controlsDisabled = busy || !canWrite;
   const error =
     getErrorMessageOrNull(settingsQuery.error) ||
@@ -68,6 +74,8 @@ export function SettingsPage() {
     getErrorMessageOrNull(addPoolMemberMutation.error) ||
     getErrorMessageOrNull(deleteEndpointMutation.error) ||
     getErrorMessageOrNull(deletePoolMutation.error) ||
+    getErrorMessageOrNull(updateEndpointMutation.error) ||
+    getErrorMessageOrNull(updatePoolMutation.error) ||
     getErrorMessageOrNull(testEndpointMutation.error);
 
   const handleSave = async (payload: SettingsUpdateRequest) => {
@@ -170,9 +178,13 @@ export function SettingsPage() {
                   busy={controlsDisabled}
                   onSaveSettings={handleSave}
                   onCreateEndpoint={(payload) => createEndpointMutation.mutateAsync(payload)}
+                  onUpdateEndpoint={(endpointId, payload) =>
+                    updateEndpointMutation.mutateAsync({ endpointId, payload })
+                  }
                   onTestEndpoint={(endpointId) => testEndpointMutation.mutateAsync(endpointId)}
                   onDeleteEndpoint={(endpointId) => deleteEndpointMutation.mutateAsync(endpointId)}
                   onCreatePool={(payload) => createPoolMutation.mutateAsync(payload)}
+                  onUpdatePool={(poolId, payload) => updatePoolMutation.mutateAsync({ poolId, payload })}
                   onAddPoolMember={(poolId, payload) =>
                     addPoolMemberMutation.mutateAsync({ poolId, payload })
                   }
@@ -197,7 +209,7 @@ export function SettingsPage() {
             </AdvancedSettingsGroup>
           </div>
 
-          <LoadingOverlay visible={!!settings && busy} label={t("settings.page.savingLabel")} />
+          <LoadingOverlay visible={!!settings && savingBusy} label={t("settings.page.savingLabel")} />
         </>
       )}
     </div>

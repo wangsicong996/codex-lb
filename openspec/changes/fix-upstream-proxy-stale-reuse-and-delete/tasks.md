@@ -5,3 +5,4 @@
 - [x] 3. Wire dashboard delete controls, API client, i18n, and confirmation dialogs
 - [x] 4. Add unit/integration/frontend coverage for reconnect and delete paths
 - [ ] 5. Run focused tests and strict OpenSpec validation
+- [x] 6. Add PUT endpoint/pool APIs, edit dialogs, Edit buttons left of Delete, and coverage
