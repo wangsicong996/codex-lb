@@ -560,7 +560,6 @@ async def test_upstream_proxy_admin_controls(async_client):
 
 
 @pytest.mark.asyncio
-
 async def test_upstream_proxy_delete_endpoint_and_pool(async_client):
     endpoint = await async_client.post(
         "/api/settings/upstream-proxy/endpoints",
@@ -595,6 +594,7 @@ async def test_upstream_proxy_delete_endpoint_and_pool(async_client):
     assert admin.json()["pools"] == []
 
 
+@pytest.mark.asyncio
 async def test_upstream_proxy_delete_pool_blocked_by_binding(async_client):
     account_id = await _import_account(async_client, "acct_proxy_delete", "proxy-delete@example.com")
 

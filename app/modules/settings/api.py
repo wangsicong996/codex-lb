@@ -289,7 +289,6 @@ async def test_upstream_proxy_endpoint(
     )
 
 
-
 @router.delete("/upstream-proxy/endpoints/{endpoint_id}", status_code=204)
 async def delete_upstream_proxy_endpoint(
     endpoint_id: str,
@@ -331,7 +330,6 @@ async def create_upstream_proxy_pool(
         is_active=pool.is_active,
         endpoint_ids=endpoint_ids,
     )
-
 
 
 @router.delete("/upstream-proxy/pools/{pool_id}", status_code=204)
