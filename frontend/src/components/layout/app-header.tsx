@@ -25,6 +25,7 @@ const CORE_NAV_ITEMS = [
   { to: "/accounts", labelKey: "nav.accounts" },
   { to: "/apis", labelKey: "nav.apis" },
   { to: "/settings", labelKey: "nav.settings" },
+  { to: "/proxy", labelKey: "nav.proxy" },
 ] as const;
 
 const ADVANCED_NAV_ITEMS = [

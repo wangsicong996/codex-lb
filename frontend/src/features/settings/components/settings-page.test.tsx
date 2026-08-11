@@ -8,9 +8,7 @@ import { createDashboardSettings } from "@/test/mocks/factories";
 
 const useSettingsMock = vi.fn();
 const useAccountsMock = vi.fn();
-const useUpstreamProxyAdminMock = vi.fn();
 const routingSettingsMock = vi.fn();
-const upstreamProxySettingsMock = vi.fn();
 const importSettingsMock = vi.fn();
 const guestAccessSettingsMock = vi.fn();
 const apiKeysSectionMock = vi.fn();
@@ -22,7 +20,6 @@ const dataRetentionSettingsMock = vi.fn();
 
 vi.mock("@/features/settings/hooks/use-settings", () => ({
   useSettings: () => useSettingsMock(),
-  useUpstreamProxyAdmin: () => useUpstreamProxyAdminMock(),
 }));
 
 vi.mock("@/features/accounts/hooks/use-accounts", () => ({
@@ -37,13 +34,6 @@ vi.mock("@/features/settings/components/routing-settings", () => ({
   RoutingSettings: (props: unknown) => {
     routingSettingsMock(props);
     return <div>Routing Settings</div>;
-  },
-}));
-
-vi.mock("@/features/settings/components/upstream-proxy-settings", () => ({
-  UpstreamProxySettings: (props: unknown) => {
-    upstreamProxySettingsMock(props);
-    return <div>Upstream Proxy Settings</div>;
   },
 }));
 
@@ -113,7 +103,6 @@ vi.mock("@/features/model-sources/components/model-sources-settings", () => ({
 
 describe("SettingsPage", () => {
   const settings = createDashboardSettings();
-  const upstreamAdmin = { endpoints: [], pools: [], bindings: [], routingEnabled: false, defaultPoolId: null };
 
   beforeEach(() => {
     useAuthStore.setState({
@@ -141,23 +130,8 @@ describe("SettingsPage", () => {
         isLoading: false,
       },
     });
-    useUpstreamProxyAdminMock.mockReturnValue({
-      upstreamProxyQuery: {
-        data: upstreamAdmin,
-        error: null,
-      },
-      createEndpointMutation: { isPending: false, error: null, mutateAsync: vi.fn() },
-      createPoolMutation: { isPending: false, error: null, mutateAsync: vi.fn() },
-      addPoolMemberMutation: { isPending: false, error: null, mutateAsync: vi.fn() },
-      deleteEndpointMutation: { isPending: false, error: null, mutateAsync: vi.fn() },
-      deletePoolMutation: { isPending: false, error: null, mutateAsync: vi.fn() },
-      updateEndpointMutation: { isPending: false, error: null, mutateAsync: vi.fn() },
-      updatePoolMutation: { isPending: false, error: null, mutateAsync: vi.fn() },
-      testEndpointMutation: { isPending: false, error: null, mutateAsync: vi.fn() },
-    });
 
     routingSettingsMock.mockReset();
-    upstreamProxySettingsMock.mockReset();
     importSettingsMock.mockReset();
     guestAccessSettingsMock.mockReset();
     apiKeysSectionMock.mockReset();
@@ -185,7 +159,6 @@ describe("SettingsPage", () => {
     expect(screen.queryByText("Sticky Sessions Section")).not.toBeInTheDocument();
     expect(screen.queryByText("Data Retention Settings")).not.toBeInTheDocument();
     expect(routingSettingsMock).not.toHaveBeenCalled();
-    expect(upstreamProxySettingsMock).not.toHaveBeenCalled();
     expect(modelSourcesSettingsMock).not.toHaveBeenCalled();
     expect(firewallSectionMock).not.toHaveBeenCalled();
     expect(quotaPlannerSectionMock).not.toHaveBeenCalled();
@@ -204,7 +177,7 @@ describe("SettingsPage", () => {
     await expandAdvancedSettings();
 
     expect(screen.getByText("Routing Settings")).toBeInTheDocument();
-    expect(screen.getByText("Upstream Proxy Settings")).toBeInTheDocument();
+    expect(screen.queryByText("Upstream Proxy Settings")).not.toBeInTheDocument();
     expect(screen.getByText("Model Sources Settings")).toBeInTheDocument();
     expect(screen.getByText("Firewall Section")).toBeInTheDocument();
     expect(screen.getByText("Quota Planner Section")).toBeInTheDocument();
@@ -227,7 +200,6 @@ describe("SettingsPage", () => {
     await expandAdvancedSettings();
 
     expect(routingSettingsMock).toHaveBeenCalledWith(expect.objectContaining({ busy: true }));
-    expect(upstreamProxySettingsMock).toHaveBeenCalledWith(expect.objectContaining({ busy: true }));
     expect(firewallSectionMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }));
     expect(quotaPlannerSectionMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }));
     expect(stickySessionsSectionMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }));

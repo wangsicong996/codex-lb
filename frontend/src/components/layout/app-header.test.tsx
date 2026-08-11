@@ -110,6 +110,7 @@ describe("AppHeader", () => {
     expect(screen.getByRole("link", { name: /Accounts/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /APIs/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Settings/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^Proxy$/i })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Automations" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Advanced" })).toBeInTheDocument();
   });

@@ -20,10 +20,9 @@ import { ResetCreditSettings } from "@/features/settings/components/reset-credit
 import { RoutingSettings } from "@/features/settings/components/routing-settings";
 import { SessionSettings } from "@/features/settings/components/session-settings";
 import { SettingsSkeleton } from "@/features/settings/components/settings-skeleton";
-import { UpstreamProxySettings } from "@/features/settings/components/upstream-proxy-settings";
 import { StickySessionsSection } from "@/features/sticky-sessions/components/sticky-sessions-section";
 import { useAuthStore } from "@/features/auth/hooks/use-auth";
-import { useSettings, useUpstreamProxyAdmin } from "@/features/settings/hooks/use-settings";
+import { useSettings } from "@/features/settings/hooks/use-settings";
 import type { SettingsUpdateRequest } from "@/features/settings/schemas";
 import { getErrorMessageOrNull } from "@/utils/errors";
 
@@ -35,48 +34,17 @@ export function SettingsPage() {
   const { t } = useTranslation();
   const { settingsQuery, updateSettingsMutation } = useSettings();
   const { accountsQuery } = useAccounts();
-  const {
-    upstreamProxyQuery,
-    createEndpointMutation,
-    createPoolMutation,
-    addPoolMemberMutation,
-    deleteEndpointMutation,
-    deletePoolMutation,
-    updateEndpointMutation,
-    updatePoolMutation,
-    testEndpointMutation,
-  } = useUpstreamProxyAdmin();
   const authMode = useAuthStore((state) => state.authMode);
   const passwordManagementEnabled = useAuthStore((state) => state.passwordManagementEnabled);
   const passwordSessionActive = useAuthStore((state) => state.passwordSessionActive);
   const canWrite = useAuthStore((state) => state.canWrite);
 
   const settings = settingsQuery.data;
-  // Endpoint probes are not settings writes — keep them out of the page-wide
-  // "Saving settings..." overlay and disable only the in-row Test spinner.
-  const savingBusy =
-    updateSettingsMutation.isPending ||
-    createEndpointMutation.isPending ||
-    createPoolMutation.isPending ||
-    addPoolMemberMutation.isPending ||
-    deleteEndpointMutation.isPending ||
-    deletePoolMutation.isPending ||
-    updateEndpointMutation.isPending ||
-    updatePoolMutation.isPending;
+  const savingBusy = updateSettingsMutation.isPending;
   const busy = savingBusy;
   const controlsDisabled = busy || !canWrite;
   const error =
-    getErrorMessageOrNull(settingsQuery.error) ||
-    getErrorMessageOrNull(upstreamProxyQuery.error) ||
-    getErrorMessageOrNull(updateSettingsMutation.error) ||
-    getErrorMessageOrNull(createEndpointMutation.error) ||
-    getErrorMessageOrNull(createPoolMutation.error) ||
-    getErrorMessageOrNull(addPoolMemberMutation.error) ||
-    getErrorMessageOrNull(deleteEndpointMutation.error) ||
-    getErrorMessageOrNull(deletePoolMutation.error) ||
-    getErrorMessageOrNull(updateEndpointMutation.error) ||
-    getErrorMessageOrNull(updatePoolMutation.error) ||
-    getErrorMessageOrNull(testEndpointMutation.error);
+    getErrorMessageOrNull(settingsQuery.error) || getErrorMessageOrNull(updateSettingsMutation.error);
 
   const handleSave = async (payload: SettingsUpdateRequest) => {
     await updateSettingsMutation.mutateAsync(payload);
@@ -84,7 +52,6 @@ export function SettingsPage() {
 
   return (
     <div className="animate-fade-in-up space-y-6">
-      {/* Page header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <Settings className="h-5 w-5 text-primary" />
@@ -159,7 +126,7 @@ export function SettingsPage() {
                   settings.limitWarmupPrompt,
                   settings.limitWarmupExhaustedThresholdPercent,
                   settings.limitWarmupIdleThresholdPercent,
-                  settings.limitWarmupCooldownSeconds,
+                  settings.limitWarmupDataSeconds,
                   settings.limitWarmupStaggeredIdleEnabled,
                   settings.proxyAccountResponseCreateLimit,
                   settings.proxyAccountStreamLimit,
@@ -172,25 +139,6 @@ export function SettingsPage() {
                 busy={controlsDisabled}
                 onSave={handleSave}
               />
-              {upstreamProxyQuery.data ? (
-                <UpstreamProxySettings
-                  admin={upstreamProxyQuery.data}
-                  busy={controlsDisabled}
-                  onSaveSettings={handleSave}
-                  onCreateEndpoint={(payload) => createEndpointMutation.mutateAsync(payload)}
-                  onUpdateEndpoint={(endpointId, payload) =>
-                    updateEndpointMutation.mutateAsync({ endpointId, payload })
-                  }
-                  onTestEndpoint={(endpointId) => testEndpointMutation.mutateAsync(endpointId)}
-                  onDeleteEndpoint={(endpointId) => deleteEndpointMutation.mutateAsync(endpointId)}
-                  onCreatePool={(payload) => createPoolMutation.mutateAsync(payload)}
-                  onUpdatePool={(poolId, payload) => updatePoolMutation.mutateAsync({ poolId, payload })}
-                  onAddPoolMember={(poolId, payload) =>
-                    addPoolMemberMutation.mutateAsync({ poolId, payload })
-                  }
-                  onDeletePool={(poolId) => deletePoolMutation.mutateAsync(poolId)}
-                />
-              ) : null}
               <ModelSourcesSettings disabled={controlsDisabled} />
               <FirewallSection disabled={controlsDisabled} />
               <QuotaPlannerSection disabled={controlsDisabled} />

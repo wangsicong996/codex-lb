@@ -13,7 +13,7 @@ import { useAuthStore } from "@/features/auth/hooks/use-auth";
 import { useTimeFormatStore } from "@/hooks/use-time-format";
 
 // Route-level code splitting: only the visited page's chunk loads, instead
-// of one entry bundle carrying all six pages' code.
+// of one entry bundle carrying every page's code.
 const DashboardPage = lazy(() =>
   import("@/features/dashboard/components/dashboard-page").then((m) => ({ default: m.DashboardPage })),
 );
@@ -29,6 +29,9 @@ const AutomationsPage = lazy(() =>
 const ApisPage = lazy(() => import("@/features/apis/components/apis-page").then((m) => ({ default: m.ApisPage })));
 const SettingsPage = lazy(() =>
   import("@/features/settings/components/settings-page").then((m) => ({ default: m.SettingsPage })),
+);
+const ProxyPage = lazy(() =>
+  import("@/features/proxy/components/proxy-page").then((m) => ({ default: m.ProxyPage })),
 );
 
 function AppLayout() {
@@ -79,6 +82,7 @@ export default function App() {
             <Route path="/automations" element={<AutomationsPage />} />
             <Route path="/apis" element={<ApisPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/proxy" element={<ProxyPage />} />
             <Route path="/firewall" element={<Navigate to="/settings" replace />} />
           </Route>
         </Routes>
